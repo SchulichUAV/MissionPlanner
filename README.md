@@ -1,5 +1,17 @@
-MissionPlanner
+MissionPlanner - SUAV Fork
 ==============
+
+
+SUAV FOLKS!!!
+==============
+The binary build is available is in the bin/Releases folder. (MissionPlanner.exe)
+
+Read this guide about how to compile and edit this code
+http://wiki.calgaryuav.com/doku.php/electroware/mission_planner
+
+
+
+
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/ArduPilot/MissionPlanner?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
