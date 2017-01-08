@@ -4380,5 +4380,17 @@ namespace MissionPlanner.GCSViews
         {
             new Utilities.AltitudeAngel.AASettings().Show(this);
         }
+
+        private void killButton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                MainV2.comPort.setParam("AFS_TERMINATION", ((float)1.0f));
+            }
+            catch
+            {
+                CustomMessageBox.Show(String.Format(Strings.ErrorSetValueFailed, "AFS_TERMINATION"), Strings.ERROR);
+            }
+        }
     }
 }
