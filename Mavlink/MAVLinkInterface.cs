@@ -950,6 +950,7 @@ Please check the following
             if (!MAVlist[sysid,compid].param.ContainsKey(paramname))
             {
                 log.Warn("Trying to set Param that doesnt exist " + paramname + "=" + value);
+                CustomMessageBox.Show("!!!!!", Strings.ERROR);
                 return false;
             }
 

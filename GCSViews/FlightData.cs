@@ -4385,7 +4385,7 @@ namespace MissionPlanner.GCSViews
         {
             try
             {
-                MainV2.comPort.setParam("AFS_TERMINATION", ((float)1.0f));
+                MainV2.comPort.setParam("AFS_TERMINATE", 1.0f, true);
             }
             catch
             {
