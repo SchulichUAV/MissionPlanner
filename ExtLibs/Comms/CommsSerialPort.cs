@@ -4,7 +4,6 @@ using System.Text;
 using System.IO.Ports;
 using System.IO;
 using System.Linq;
-using System.Management;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
@@ -16,7 +15,7 @@ namespace MissionPlanner.Comms
 
     public class SerialPort : System.IO.Ports.SerialPort, ICommsSerial
     {
-        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILog log = LogManager.GetLogger(typeof(SerialPort));
 
         static object locker = new object();
 
@@ -81,12 +80,19 @@ namespace MissionPlanner.Comms
             try
             {
                 base.Open();
+                base.WriteTimeout = -1;
             }
             catch {
-                try { base.Close(); }
+                try { Close(); }
                 catch { }
                 throw;
             }
+        }
+
+        public new void Close()
+        {
+            log.Info("Closing port " + PortName);
+            base.Close();
         }
 
         public void toggleDTR()
@@ -222,6 +228,7 @@ namespace MissionPlanner.Comms
         {
             try
             {
+                /*
                 ObjectQuery query = new ObjectQuery("SELECT * FROM Win32_SerialPort");                // Win32_USBControllerDevice
                 using (ManagementObjectSearcher searcher = new ManagementObjectSearcher(query))
                 {
@@ -235,6 +242,7 @@ namespace MissionPlanner.Comms
                         }
                     }
                 }
+                */
             }
             catch { }
 
@@ -266,6 +274,7 @@ namespace MissionPlanner.Comms
         {
             try
             {
+                /*
                 ObjectQuery query = new ObjectQuery("SELECT * FROM Win32_SerialPort");// Win32_USBControllerDevice
                 using (ManagementObjectSearcher searcher = new ManagementObjectSearcher(query))
                 {
@@ -280,6 +289,7 @@ namespace MissionPlanner.Comms
                     }
 
                 }
+                */
             }
             catch (Exception ex) { log.Error(ex); }
 
@@ -310,7 +320,7 @@ namespace MissionPlanner.Comms
 
     public sealed class SerialPortFixer : IDisposable
     {
-        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILog log = LogManager.GetLogger(typeof(SerialPortFixer));
 
         public static void Execute(string portName)
         {
@@ -324,7 +334,7 @@ namespace MissionPlanner.Comms
         {
             if (m_Handle != null)
             {
-                m_Handle.Close();
+                m_Handle.Dispose();
                 m_Handle = null;
             }
             GC.SuppressFinalize(this);
@@ -363,7 +373,7 @@ namespace MissionPlanner.Comms
             }
             catch
             {
-                hFile.Close();
+                hFile.Dispose();
                 m_Handle = null;
                 throw;
             }
@@ -501,7 +511,7 @@ namespace MissionPlanner.Comms
          */
 
         [StructLayout(LayoutKind.Sequential)]
-        private struct Dcb
+        public struct Dcb
         {
             public readonly uint DCBlength;
             public readonly uint BaudRate;

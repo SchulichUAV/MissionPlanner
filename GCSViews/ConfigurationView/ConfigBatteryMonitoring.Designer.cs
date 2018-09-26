@@ -247,8 +247,7 @@
             // 
             // ConfigBatteryMonitoring
             // 
-            resources.ApplyResources(this, "$this");
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
+            
             this.Controls.Add(this.CHK_speechbattery);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
@@ -262,6 +261,7 @@
             this.Controls.Add(this.CMB_batmontype);
             this.Controls.Add(this.pictureBox5);
             this.Name = "ConfigBatteryMonitoring";
+            resources.ApplyResources(this, "$this");
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox5)).EndInit();
             this.groupBox4.ResumeLayout(false);
             this.groupBox4.PerformLayout();

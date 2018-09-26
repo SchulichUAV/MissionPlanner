@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -60,7 +61,10 @@ namespace MissionPlanner.Log
 
             Loading.ShowLoading("Populating Data", this);
 
-            objectListView1.AddObjects(logs);
+            this.BeginInvokeIfRequired(a =>
+            {
+                objectListView1.AddObjects(logs);
+            });
 
             Loading.Close();
         }
@@ -72,10 +76,11 @@ namespace MissionPlanner.Log
         }
 
         List<object> logs = new List<object>();
-
+        int a = 0;
         void processbg(string file)
         {
-            Loading.ShowLoading(file, this);
+            a++;
+            Loading.ShowLoading(a+"/"+files.Count + " " + file, this);
 
             if (!File.Exists(file + ".jpg"))
             {
@@ -86,11 +91,19 @@ namespace MissionPlanner.Log
 
             loginfo.fullname = file;
 
-            loginfo.Size = new FileInfo(file).Length;
+            try
+            {
+                // file not found exception even though it passes the exists check above.
+                loginfo.Size = new FileInfo(file).Length;
+            }
+            catch
+            {
+                
+            }
 
             if (File.Exists(file + ".jpg"))
             {
-                loginfo.img = new Bitmap(file + ".jpg");
+                loginfo.imgfile = file + ".jpg";
             }
 
             if (file.ToLower().EndsWith(".tlog"))
@@ -147,7 +160,10 @@ namespace MissionPlanner.Log
                         if(packet.sysid == 255)
                             continue;
 
-                        if(a % 10 == 0)
+                        if (packet.msgid == (uint)MAVLink.MAVLINK_MSG_ID.CAMERA_FEEDBACK)
+                            loginfo.CamMSG++;
+
+                        if (a % 10 == 0)
                             mine.MAV.cs.UpdateCurrentSettings(null, true, mine);
 
                         a++;
@@ -163,6 +179,68 @@ namespace MissionPlanner.Log
                     loginfo.DistTraveled = mine.MAV.cs.distTraveled;
 
                     loginfo.Duration = (end - start).ToString();
+                }
+            }
+            else if (file.ToLower().EndsWith(".bin") || file.ToLower().EndsWith(".log"))
+            {
+                using (CollectionBuffer colbuf = new CollectionBuffer(File.OpenRead(file)))
+                {
+                    PointLatLngAlt lastpos = null;
+                    DateTime start = DateTime.MinValue;
+                    DateTime end = DateTime.MinValue;
+                    DateTime tia = DateTime.MinValue;
+                    // set time in air/home/distancetraveled
+                    foreach (var dfItem in colbuf.GetEnumeratorType("GPS"))
+                    {
+                        if (dfItem["Status"] != null)
+                        {
+                            var status = int.Parse(dfItem["Status"]);
+                            if (status >= 3)
+                            {
+                                var pos = new PointLatLngAlt(
+                                    double.Parse(dfItem["Lat"], CultureInfo.InvariantCulture),
+                                    double.Parse(dfItem["Lng"], CultureInfo.InvariantCulture),
+                                    double.Parse(dfItem["Alt"], CultureInfo.InvariantCulture));
+
+                                if (lastpos == null)
+                                    lastpos = pos;
+
+                                if (start == DateTime.MinValue)
+                                {
+                                    loginfo.Date = dfItem.time;
+                                    start = dfItem.time;
+                                }
+
+                                end = dfItem.time;
+
+                                // add distance
+                                loginfo.DistTraveled += (float)lastpos.GetDistance(pos);
+
+                                // set home
+                                if (loginfo.Home == null)
+                                    loginfo.Home = pos;
+
+                                if (dfItem.time > tia.AddSeconds(1))
+                                {
+                                    // ground speed  > 0.2 or  alt > homelat+2
+                                    if (double.Parse(dfItem["Spd"], CultureInfo.InvariantCulture) > 0.2 ||
+                                        pos.Alt > (loginfo.Home.Alt + 2))
+                                    {
+                                        loginfo.TimeInAir++;
+                                    }
+                                    tia = dfItem.time;
+                                }
+                            }
+                        }
+                    }
+
+                    loginfo.Duration = (end - start).ToString();
+
+                    loginfo.CamMSG = colbuf.GetEnumeratorType("CAM").Count();
+
+                    loginfo.Aircraft = 0;//colbuf.dflog.param[""];
+
+                    loginfo.Frame = "Unknown";//mine.MAV.aptype.ToString();
                 }
             }
 
@@ -185,7 +263,9 @@ namespace MissionPlanner.Log
                 get { return Path.GetDirectoryName(fullname); }
             }
 
-            public Image img { get; set; }
+            internal string imgfile { get; set; }
+            private Bitmap image = null;
+            public Image img { get { lock (this) { if (image == null && !String.IsNullOrEmpty(imgfile)) image = new Bitmap(imgfile); return image; } } }
             public string Duration { get; set; }
             public DateTime Date { get; set; }
             public int Aircraft { get; set; }
@@ -197,6 +277,8 @@ namespace MissionPlanner.Log
             public float TimeInAir { get; set; }
 
             public float DistTraveled { get; set; }
+
+            public int CamMSG { get; set; }
 
             public loginfo()
             {
@@ -218,12 +300,6 @@ namespace MissionPlanner.Log
             decoration.AdornmentCorner = ContentAlignment.TopCenter;
             decoration.ReferenceCorner = ContentAlignment.TopCenter;
             e.SubItem.Decoration = decoration;
-
-            // TextDecoration td = new TextDecoration("test", ContentAlignment.BottomCenter);
-
-            // e.SubItem.Decorations.Add(td);
-
-            Application.DoEvents();
         }
 
         /// <summary>
@@ -244,8 +320,9 @@ namespace MissionPlanner.Log
 
             if (fbd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                processbg(fbd.SelectedPath);
-                //System.Threading.ThreadPool.QueueUserWorkItem(processbg, fbd.SelectedPath);
+                files.Clear();
+                createFileList(fbd.SelectedPath);
+                System.Threading.ThreadPool.QueueUserWorkItem(queueRunner);
             }
         }
     }

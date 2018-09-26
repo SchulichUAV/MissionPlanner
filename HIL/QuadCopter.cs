@@ -5,8 +5,10 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using log4net;
+using MissionPlanner.ArduPilot;
 using MissionPlanner.HIL;
 using MissionPlanner.GCSViews;
+using MissionPlanner.Utilities;
 
 
 namespace MissionPlanner.HIL
@@ -306,7 +308,7 @@ namespace MissionPlanner.HIL
                 Array.Resize(ref motors, motor_num + 1);
             }
 
-            motors[motor_num] = new Motor(Math.Atan2(-roll_fac, pitch_fac)*rad2deg, yaw_fac > 0, motor_num,
+            motors[motor_num] = new Motor(Math.Atan2(-roll_fac, pitch_fac)*MathHelper.rad2deg, yaw_fac > 0, motor_num,
                 testing_order);
         }
 
@@ -350,14 +352,14 @@ namespace MissionPlanner.HIL
             self = this;
 
             motors = Motor.build_motors(MAVLink.MAV_TYPE.QUADROTOR,
-                (int) MissionPlanner.GCSViews.ConfigurationView.ConfigFrameType.Frame.Plus);
+                (int)Frame.Plus);
             motor_speed = new double[motors.Length];
             mass = 1.5; // # Kg
             frame_height = 0.1;
 
             hover_throttle = 0.51;
             terminal_velocity = 15.0;
-            terminal_rotation_rate = 4*(360.0*deg2rad);
+            terminal_rotation_rate = 4*(360.0*MathHelper.deg2rad);
 
             thrust_scale = (mass*gravity)/(motors.Length*hover_throttle);
 
@@ -469,8 +471,8 @@ namespace MissionPlanner.HIL
 
             if (home_latitude == 0)
             {
-                home_latitude = fdm.latitude*rad2deg;
-                home_longitude = fdm.longitude*rad2deg;
+                home_latitude = fdm.latitude*MathHelper.rad2deg;
+                home_longitude = fdm.longitude*MathHelper.rad2deg;
                 home_altitude = fdm.altitude;
                 ground_level = home_altitude;
             }

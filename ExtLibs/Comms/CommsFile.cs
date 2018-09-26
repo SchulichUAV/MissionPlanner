@@ -7,10 +7,10 @@ using System.IO;
 
 namespace MissionPlanner.Comms
 {
-    public class CommsFile : CommsBase, ICommsSerial
+    public class CommsFile : CommsBase, ICommsSerial, IDisposable
     {
         // Methods
-        public void Close() { BaseStream.Close(); }
+        public void Close() { BaseStream.Dispose(); }
         public void DiscardInBuffer() { }
 
         public int bps { get; set; }
@@ -20,19 +20,32 @@ namespace MissionPlanner.Comms
         int lastsecond = 0;
 
         int step = 0;
+        private long length = 0;
+
+        public CommsFile()
+        {
+
+        }
+
+        public CommsFile(string filename)
+        {
+            Open(filename);
+        }
 
         //void DiscardOutBuffer();
         public void Open(string filename)
         {
-            bps = 10000;
+            bps = Int32.MaxValue;
             PortName = filename;
             BaseStream = File.OpenRead(PortName);
+            length = BaseStream.Length;
         }
 
         public void Open()
         {
-            bps = 10000;
+            bps = Int32.MaxValue;
             BaseStream = File.OpenRead(PortName);
+            length = BaseStream.Length;
         }
         public int Read(byte[] buffer, int offset, int count)
         {
@@ -72,23 +85,21 @@ namespace MissionPlanner.Comms
 
             if (lastsecond != DateTime.Now.Second)
             {
-                Console.WriteLine("CommsFile Read bps {0}", currentbps);
+                //Console.WriteLine("CommsFile Read bps {0}", currentbps);
                 currentbps = 0;
                 lastsecond = DateTime.Now.Second;
             }
             currentbps += count;
             int ret = BaseStream.Read(buffer, offset, count);
 
-            if (buffer[0] != 254 && offset == 0)
-                return 0;
             if (buffer[0] == 254 && offset == 1)
                 step = buffer[1] + 5 + 2; // + header + checksum
 
             step -= ret;
 
             // read the timestamp
-            if (step == 0)
-                BaseStream.Read(new byte[8], 0, 8);
+            //if (step == 0)
+                //BaseStream.Read(new byte[8], 0, 8);
 
             return ret;
         }
@@ -105,14 +116,38 @@ namespace MissionPlanner.Comms
 
         public void toggleDTR() { }
 
+        public void Dispose()
+        {
+            try
+            {
+                if (BaseStream != null)
+                    Close();
+            } catch { }
+        }
+
         // Properties
-        public Stream BaseStream { get; private set; }
+        private Stream _stream;
+        public Stream BaseStream
+        {
+            get { return _stream; }
+            set
+            {
+                _stream = value;
+                length = _stream.Length;
+            }
+        }
+
+        public void SetLength(long length)
+        {
+            this.length = length;
+        }
+
         public int BaudRate { get; set; }
         public int BytesToRead { get { if (!BaseStream.CanRead) return 0; return (int)(BaseStream.Length - BaseStream.Position); } }
         public int BytesToWrite { get; set; }
         public int DataBits  { get; set; }
         public bool DtrEnable { get; set; }
-        public bool IsOpen { get { if (BaseStream != null && BaseStream.CanRead) { return BaseStream.Position < BaseStream.Length; } return false; } }
+        public bool IsOpen { get { if (BaseStream != null && BaseStream.CanRead) { return BaseStream.Position < length; } return false; } }
 
         public Parity Parity { get; set; }
 

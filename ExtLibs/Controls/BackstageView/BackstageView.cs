@@ -15,7 +15,7 @@ namespace MissionPlanner.Controls.BackstageView
     /// <remarks>
     /// 'Tabs' are added as a control in a <see cref="BackstageViewPage"/>
     /// </remarks>
-    public partial class BackstageView : UserControl, IContainerControl
+    public partial class BackstageView : MyUserControl, IContainerControl
     {
         private static readonly ILog log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
@@ -34,6 +34,9 @@ namespace MissionPlanner.Controls.BackstageView
         private List<BackstageViewPage> expanded = new List<BackstageViewPage>();
 
         public BackstageViewPage SelectedPage { get { return _activePage; } }
+
+        public delegate void TrackingEventHandler(string page, string title);
+        public static event TrackingEventHandler Tracking;
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
         public BackstageViewCollection Pages { get { return _items; } }
@@ -73,7 +76,7 @@ namespace MissionPlanner.Controls.BackstageView
             pnlMenu.PencilBorderColor = _buttonsAreaPencilColor;
             pnlMenu.GradColor = this.BackColor;
 
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
+            
         }
 
         public void UpdateDisplay()
@@ -440,14 +443,14 @@ namespace MissionPlanner.Controls.BackstageView
         {
             if (associatedPage == null)
             {
-                if (associatedPage.Page == null)
-                    return;
                 if (_activePage == null)
                     DrawMenu(null, true);
                 return;
             }
 
-            MissionPlanner.Utilities.Tracking.AddPage(associatedPage.Page.GetType().ToString(), associatedPage.LinkText);
+            Tracking?.Invoke(associatedPage.Page.GetType().ToString(), associatedPage.LinkText);
+
+            var start = DateTime.Now;
 
             this.SuspendLayout();
             associatedPage.Page.SuspendLayout();
@@ -511,6 +514,11 @@ namespace MissionPlanner.Controls.BackstageView
                 log.Error(ex);
             }
 
+            var end = DateTime.Now;
+
+            log.DebugFormat("{0} {1} {2}", associatedPage.Page.GetType().ToString(), associatedPage.LinkText,
+                (end - start).TotalMilliseconds);
+
             _activePage = associatedPage;
         }
 
@@ -519,7 +527,7 @@ namespace MissionPlanner.Controls.BackstageView
             base.OnPaint(e);
         }
 
-        public void Close()
+        public new void Close()
         {
             foreach (var page in _items)
             {
@@ -539,11 +547,26 @@ namespace MissionPlanner.Controls.BackstageView
                     {
                         log.Error(ex);
                     }
-                    ((BackstageViewPage)page).Page.Dispose();
+
+                    try
+                    {
+                        ((BackstageViewPage)page).Page.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        log.Error(ex);
+                    }
                 }
                 else
                 {
-                    ((BackstageViewPage)page).Page.Dispose();
+                    try
+                    {
+                        ((BackstageViewPage)page).Page.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        log.Error(ex);
+                    }
                 }
             }
         }

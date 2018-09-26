@@ -5,11 +5,15 @@ using System.Text;
 using System.Windows.Forms;
 using System.Collections;
 using MissionPlanner.Utilities;
+using log4net;
+using System.Reflection;
 
 namespace MissionPlanner.Controls
 {
     public class MavlinkNumericUpDown : NumericUpDown
     {
+        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+
         [System.ComponentModel.Browsable(true)]
         public float Min { get; set; }
 
@@ -23,6 +27,8 @@ namespace MissionPlanner.Controls
         Control _control;
         float _scale = 1;
 
+        Timer timer = new Timer();
+
         [System.ComponentModel.Browsable(true)]
         public event EventHandler ValueUpdated;
 
@@ -32,6 +38,8 @@ namespace MissionPlanner.Controls
             Max = 1;
 
             this.Name = "MavlinkNumericUpDown";
+
+            timer.Tick += Timer_Tick;
 
             this.Enabled = false;
         }
@@ -69,6 +77,8 @@ namespace MissionPlanner.Controls
                     MainV2.comPort.MAV.cs.firmware.ToString());
                 Min = (float) mint;
                 Max = (float) maxt;
+                if (Min == Max)
+                    log.InfoFormat("{0} {1} = {2}", ParamName, Min, Max);
             }
 
             if (Increment == 0)
@@ -133,7 +143,7 @@ namespace MissionPlanner.Controls
             {
                 if (
                     CustomMessageBox.Show(ParamName + " Value out of range\nDo you want to accept the new value?",
-                        "Out of range", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                        "Out of range", MessageBoxButtons.YesNo) == (int)DialogResult.Yes)
                 {
                     base.Maximum = decimal.Parse(value);
                     base.Value = decimal.Parse(value);
@@ -147,15 +157,31 @@ namespace MissionPlanner.Controls
                 return;
             }
 
-            try
+            lock (timer)
             {
-                bool ans = MainV2.comPort.setParam(ParamName, (float) base.Value*(float) _scale);
-                if (ans == false)
-                    CustomMessageBox.Show(String.Format(Strings.ErrorSetValueFailed, ParamName), Strings.ERROR);
+                timer.Interval = 300;
+
+                if (!timer.Enabled)
+                    timer.Start();
             }
-            catch
+        }
+
+        private void Timer_Tick(object sender, EventArgs e)
+        {
+            lock (timer)
             {
-                CustomMessageBox.Show(String.Format(Strings.ErrorSetValueFailed, ParamName), Strings.ERROR);
+                try
+                {
+                    bool ans = MainV2.comPort.setParam(ParamName, (float) base.Value * (float) _scale);
+                    if (ans == false)
+                        CustomMessageBox.Show(String.Format(Strings.ErrorSetValueFailed, ParamName), Strings.ERROR);
+                }
+                catch
+                {
+                    CustomMessageBox.Show(String.Format(Strings.ErrorSetValueFailed, ParamName), Strings.ERROR);
+                }
+
+                timer.Stop();
             }
         }
     }

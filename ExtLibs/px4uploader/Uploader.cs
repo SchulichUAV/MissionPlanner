@@ -11,7 +11,6 @@ using Org.BouncyCastle.Security;
 using System.Runtime.InteropServices;
 using System.Reflection;
 using System.Xml;
-using System.Windows.Forms;
 
 namespace px4uploader
 {
@@ -66,6 +65,7 @@ namespace px4uploader
             BOARD_ID = 2,//	# board type
             BOARD_REV = 3,//	# board revision
             FLASH_SIZE = 4,//	# max firmware size in bytes
+            VEC_AREA = 5
         }
 
         public const byte BL_REV_MIN = 2;//	# minimum supported bootloader protocol 
@@ -140,6 +140,7 @@ namespace px4uploader
         {
             try
             {
+                port.BaseStream.Flush();
                 port.Close();
             }
             catch { }
@@ -164,7 +165,15 @@ namespace px4uploader
             string vendor = "";
             string publickey = "";
 
-            using (XmlTextReader xmlreader = new XmlTextReader(Path.GetDirectoryName(Application.ExecutablePath) + Path.DirectorySeparatorChar + @"validcertificates.xml"))
+            var file = System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) +
+                       Path.DirectorySeparatorChar + @"validcertificates.xml";
+
+            if (!File.Exists(file))
+            {
+                return;
+            }
+
+            using (XmlTextReader xmlreader = new XmlTextReader(file))
             {
                 while (xmlreader.Read())
                 {
@@ -365,7 +374,7 @@ namespace px4uploader
                 __send(new byte[] { (byte)Code.EOC });
                 byte[] ans = __recv(4);
                 __getSync();
-                Array.Reverse(ans);
+                ans = ans.Reverse().ToArray();
                 Array.Copy(ans, 0, sn, a, 4);
             }
 
@@ -405,7 +414,6 @@ namespace px4uploader
         public int __recv_int()
         {
             byte[] raw = __recv(4);
-            //raw.Reverse();
             int val = BitConverter.ToInt32(raw, 0);
             return val;
         }
@@ -432,6 +440,13 @@ namespace px4uploader
             __getSync();
         }
 
+        public bool __syncAttempt()
+        {
+            port.BaseStream.Flush();
+            __send(new byte[] { (byte)Code.GET_SYNC, (byte)Code.EOC });
+            return __trySync();
+        }
+
         public bool __trySync()
         {
             port.BaseStream.Flush();
@@ -449,7 +464,6 @@ namespace px4uploader
             __send(new byte[] { (byte)Code.GET_DEVICE, (byte)param, (byte)Code.EOC });
             int info = __recv_int();
             __getSync();
-            //Array.Reverse(raw);
             return info;
         }
 
@@ -666,7 +680,11 @@ namespace px4uploader
 
             //Make sure we are doing the right thing
             if (self.board_type != fw.board_id)
-                throw new Exception("Firmware not suitable for this board");
+            {
+                if (!(self.board_type == 33 && fw.board_id == 9))
+                    throw new Exception("Firmware not suitable for this board");
+            }
+
             if (self.fw_maxsize < fw.image_size)
                 throw new Exception("Firmware image is too large for this board");
 

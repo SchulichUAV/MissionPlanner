@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -9,17 +10,15 @@ using System.Threading;
 using System.Windows.Forms;
 using log4net;
 using MissionPlanner.Comms;
+using MissionPlanner.MsgBox;
 using MissionPlanner.Radio;
+using MissionPlanner.Utilities;
 using uploader;
 
-namespace MissionPlanner
+namespace MissionPlanner.Radio
 {
     public partial class Sikradio : UserControl
     {
-        public delegate void LogEventHandler(string message, int level = 0);
-
-        public delegate void ProgressEventHandler(double completed);
-
         private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
         private bool beta;
@@ -84,43 +83,43 @@ S15: MAX_WINDOW=131
             {
                 if (beta)
                 {
-                    return Common.getFilefromNet("http://firmware.ardupilot.org/SiK/beta/radio~hm_trp.ihx", firmwarefile);
+                    return Download.getFilefromNet("http://firmware.ardupilot.org/SiK/beta/radio~hm_trp.ihx", firmwarefile);
                 }
-                return Common.getFilefromNet("http://firmware.ardupilot.org/SiK/stable/radio~hm_trp.ihx",
+                return Download.getFilefromNet("http://firmware.ardupilot.org/SiK/stable/radio~hm_trp.ihx",
                     firmwarefile);
             }
             if (device == Uploader.Board.DEVICE_ID_RFD900)
             {
                 if (beta)
                 {
-                    return Common.getFilefromNet("http://firmware.ardupilot.org/SiK/beta/radio~rfd900.ihx", firmwarefile);
+                    return Download.getFilefromNet("http://firmware.ardupilot.org/SiK/beta/radio~rfd900.ihx", firmwarefile);
                 }
-                return Common.getFilefromNet("http://firmware.ardupilot.org/SiK/stable/radio~rfd900.ihx", firmwarefile);
+                return Download.getFilefromNet("http://firmware.ardupilot.org/SiK/stable/radio~rfd900.ihx", firmwarefile);
             }
             if (device == Uploader.Board.DEVICE_ID_RFD900A)
             {
                 if (beta)
                 {
-                    return Common.getFilefromNet("http://firmware.ardupilot.org/SiK/beta/radio~rfd900a.ihx",
+                    return Download.getFilefromNet("http://firmware.ardupilot.org/SiK/beta/radio~rfd900a.ihx",
                         firmwarefile);
                 }
-                return Common.getFilefromNet("http://firmware.ardupilot.org/SiK/stable/radio~rfd900a.ihx", firmwarefile);
+                return Download.getFilefromNet("http://firmware.ardupilot.org/SiK/stable/radio~rfd900a.ihx", firmwarefile);
             }
             if (device == Uploader.Board.DEVICE_ID_RFD900U)
             {
                 if (beta)
                 {
-                    return Common.getFilefromNet("http://files.rfdesign.com.au/Files/firmware/MPSiK%20V2.6%20rfd900u.ihx", firmwarefile);
+                    return Download.getFilefromNet("http://files.rfdesign.com.au/Files/firmware/MPSiK%20V2.6%20rfd900u.ihx", firmwarefile);
                 }
-                return Common.getFilefromNet("http://files.rfdesign.com.au/Files/firmware/RFDSiK%20V1.9%20rfd900u.ihx", firmwarefile);
+                return Download.getFilefromNet("http://files.rfdesign.com.au/Files/firmware/RFDSiK%20V1.9%20rfd900u.ihx", firmwarefile);
             }
             if (device == Uploader.Board.DEVICE_ID_RFD900P)
             {
                 if (beta)
                 {
-                    return Common.getFilefromNet("http://files.rfdesign.com.au/Files/firmware/MPSiK%20V2.6%20rfd900p.ihx", firmwarefile);
+                    return Download.getFilefromNet("http://files.rfdesign.com.au/Files/firmware/MPSiK%20V2.6%20rfd900p.ihx", firmwarefile);
                 }
-                return Common.getFilefromNet("http://files.rfdesign.com.au/Files/firmware/RFDSiK%20V1.9%20rfd900p.ihx", firmwarefile);
+                return Download.getFilefromNet("http://files.rfdesign.com.au/Files/firmware/RFDSiK%20V1.9%20rfd900p.ihx", firmwarefile);
             }
             return false;
         }
@@ -141,7 +140,7 @@ S15: MAX_WINDOW=131
                     }
                     catch (Exception ex)
                     {
-                        CustomMessageBox.Show("Error copying file\n" + ex, "ERROR");
+                        MsgBox.CustomMessageBox.Show("Error copying file\n" + ex, "ERROR");
                         return false;
                     }
                     return true;
@@ -255,20 +254,20 @@ S15: MAX_WINDOW=131
                 }
                 catch (Exception ex)
                 {
-                    CustomMessageBox.Show("Error " + ex);
+                    MsgBox.CustomMessageBox.Show("Error " + ex);
                 }
             }
 
             try
             {
-                comPort.PortName = MainV2.comPort.BaseStream.PortName;
+                comPort.PortName = MainV2.comPortName;
                 comPort.BaudRate = 115200;
 
                 comPort.Open();
             }
             catch
             {
-                CustomMessageBox.Show("Invalid ComPort or in use");
+                MsgBox.CustomMessageBox.Show("Invalid ComPort or in use");
                 return;
             }
 
@@ -325,7 +324,7 @@ S15: MAX_WINDOW=131
                 }
                 catch
                 {
-                    CustomMessageBox.Show("Error opening port", "Error");
+                    MsgBox.CustomMessageBox.Show("Error opening port", "Error");
                     return;
                 }
 
@@ -370,7 +369,7 @@ S15: MAX_WINDOW=131
                 }
                 catch
                 {
-                    CustomMessageBox.Show("Failed to sync with Radio");
+                    MsgBox.CustomMessageBox.Show("Failed to sync with Radio");
                     goto exit;
                 }
 
@@ -390,7 +389,7 @@ S15: MAX_WINDOW=131
                     }
                     catch
                     {
-                        CustomMessageBox.Show("Bad Firmware File");
+                        MsgBox.CustomMessageBox.Show("Bad Firmware File");
                         goto exit;
                     }
 
@@ -401,17 +400,17 @@ S15: MAX_WINDOW=131
                     }
                     catch (Exception ex)
                     {
-                        CustomMessageBox.Show("Upload Failed " + ex.Message);
+                        MsgBox.CustomMessageBox.Show("Upload Failed " + ex.Message);
                     }
                 }
                 else
                 {
-                    CustomMessageBox.Show("Failed to download new firmware");
+                    MsgBox.CustomMessageBox.Show("Failed to download new firmware");
                 }
             }
             else
             {
-                CustomMessageBox.Show("Failed to identify Radio");
+                MsgBox.CustomMessageBox.Show("Failed to identify Radio");
             }
 
             exit:
@@ -493,8 +492,8 @@ S15: MAX_WINDOW=131
                 }
                 else
                 {
-                    comPort.PortName = MainV2.comPort.BaseStream.PortName;
-                    comPort.BaudRate = MainV2.comPort.BaseStream.BaudRate;
+                    comPort.PortName = MainV2.comPortName;
+                    comPort.BaudRate = MainV2.comPortBaud;
                 }
 
                 comPort.ReadTimeout = 4000;
@@ -503,7 +502,7 @@ S15: MAX_WINDOW=131
             }
             catch
             {
-                CustomMessageBox.Show("Invalid ComPort or in use");
+                MsgBox.CustomMessageBox.Show("Invalid ComPort or in use");
                 return;
             }
 
@@ -528,7 +527,7 @@ S15: MAX_WINDOW=131
 
                     foreach (var item in items)
                     {
-                        if (item.StartsWith("S"))
+                        //if (item.StartsWith("S"))
                         {
                             var values = item.Split(':', '=');
 
@@ -547,7 +546,7 @@ S15: MAX_WINDOW=131
                                         if (value != values[2].Trim())
                                         {
                                             var cmdanswer = doCommand(comPort,
-                                                "RT" + values[0].Trim() + "=" + value + "\r");
+                                                "RTS" + values[0].Trim().TrimStart('S') + "=" + value + "\r");
 
                                             if (cmdanswer.Contains("OK"))
                                             {
@@ -557,12 +556,12 @@ S15: MAX_WINDOW=131
                                                 if (values[1] == "ENCRYPTION_LEVEL")
                                                 {
                                                     // set this on the local radio as well.
-                                                    doCommand(comPort, "AT" + values[0].Trim() + "=" + value + "\r");
+                                                    doCommand(comPort, "ATS" + values[0].Trim().TrimStart('S') + "=" + value + "\r");
                                                     // both radios should now be using the default key
                                                 }
                                                 else
                                                 {
-                                                    CustomMessageBox.Show("Set Command error");
+                                                    MsgBox.CustomMessageBox.Show("Set Command error");
                                                 }
                                             }
                                         }
@@ -575,7 +574,7 @@ S15: MAX_WINDOW=131
                                         if (((ComboBox) controls[0]).SelectedValue.ToString() != values[2].Trim())
                                         {
                                             var cmdanswer = doCommand(comPort,
-                                                "RT" + values[0].Trim() + "=" + ((ComboBox) controls[0]).SelectedValue +
+                                                "RTS" + values[0].Trim().TrimStart('S') + "=" + ((ComboBox) controls[0]).SelectedValue +
                                                 "\r");
 
                                             if (cmdanswer.Contains("OK"))
@@ -583,7 +582,7 @@ S15: MAX_WINDOW=131
                                             }
                                             else
                                             {
-                                                CustomMessageBox.Show("Set Command error");
+                                                MsgBox.CustomMessageBox.Show("Set Command error");
                                             }
                                         }
                                     }
@@ -592,14 +591,14 @@ S15: MAX_WINDOW=131
                                         if (controls[0].Text != values[2].Trim())
                                         {
                                             var cmdanswer = doCommand(comPort,
-                                                "RT" + values[0].Trim() + "=" + controls[0].Text + "\r");
+                                                "RTS" + values[0].Trim().TrimStart('S') + "=" + controls[0].Text + "\r");
 
                                             if (cmdanswer.Contains("OK"))
                                             {
                                             }
                                             else
                                             {
-                                                CustomMessageBox.Show("Set Command error");
+                                                MsgBox.CustomMessageBox.Show("Set Command error");
                                             }
                                         }
                                     }
@@ -621,7 +620,7 @@ S15: MAX_WINDOW=131
 
                     foreach (var item in items)
                     {
-                        if (item.StartsWith("S"))
+                        //if (item.StartsWith("S"))
                         {
                             var values = item.Split(':', '=');
 
@@ -640,14 +639,14 @@ S15: MAX_WINDOW=131
                                         if (value != values[2].Trim())
                                         {
                                             var cmdanswer = doCommand(comPort,
-                                                "AT" + values[0].Trim() + "=" + value + "\r");
+                                                "ATS" + values[0].Trim().TrimStart('S') + "=" + value + "\r");
 
                                             if (cmdanswer.Contains("OK"))
                                             {
                                             }
                                             else
                                             {
-                                                CustomMessageBox.Show("Set Command error");
+                                                MsgBox.CustomMessageBox.Show("Set Command error");
                                             }
                                         }
                                     }
@@ -659,7 +658,7 @@ S15: MAX_WINDOW=131
                                         if (((ComboBox) controls[0]).SelectedValue.ToString() != values[2].Trim())
                                         {
                                             var cmdanswer = doCommand(comPort,
-                                                "AT" + values[0].Trim() + "=" + ((ComboBox) controls[0]).SelectedValue +
+                                                "ATS" + values[0].Trim().TrimStart('S') + "=" + ((ComboBox) controls[0]).SelectedValue +
                                                 "\r");
 
                                             if (cmdanswer.Contains("OK"))
@@ -667,7 +666,7 @@ S15: MAX_WINDOW=131
                                             }
                                             else
                                             {
-                                                CustomMessageBox.Show("Set Command error");
+                                                MsgBox.CustomMessageBox.Show("Set Command error");
                                             }
                                         }
                                     }
@@ -676,14 +675,14 @@ S15: MAX_WINDOW=131
                                         if (controls[0].Text != values[2].Trim())
                                         {
                                             var cmdanswer = doCommand(comPort,
-                                                "AT" + values[0].Trim() + "=" + controls[0].Text + "\r");
+                                                "ATS" + values[0].Trim().TrimStart('S') + "=" + controls[0].Text + "\r");
 
                                             if (cmdanswer.Contains("OK"))
                                             {
                                             }
                                             else
                                             {
-                                                CustomMessageBox.Show("Set Command error");
+                                                MsgBox.CustomMessageBox.Show("Set Command error");
                                             }
                                         }
                                     }
@@ -729,7 +728,7 @@ S15: MAX_WINDOW=131
                 doCommand(comPort, "ATZ");
 
                 lbl_status.Text = "Fail";
-                CustomMessageBox.Show("Failed to enter command mode");
+                MsgBox.CustomMessageBox.Show("Failed to enter command mode");
             }
 
 
@@ -793,8 +792,8 @@ S15: MAX_WINDOW=131
                 }
                 else
                 {
-                    comPort.PortName = MainV2.comPort.BaseStream.PortName;
-                    comPort.BaudRate = MainV2.comPort.BaseStream.BaudRate;
+                    comPort.PortName = MainV2.comPortName;
+                    comPort.BaudRate = MainV2.comPortBaud;
                 }
 
                 comPort.ReadTimeout = 4000;
@@ -803,7 +802,7 @@ S15: MAX_WINDOW=131
             }
             catch
             {
-                CustomMessageBox.Show("Invalid ComPort or in use");
+                MsgBox.CustomMessageBox.Show("Invalid ComPort or in use");
                 return;
             }
 
@@ -822,14 +821,31 @@ S15: MAX_WINDOW=131
 
                     ATI.Text = doCommand(comPort, "ATI");
 
+                    NumberStyles style = NumberStyles.Any;
+
+                    var freqstring = doCommand(comPort, "ATI3").Trim();
+
+                    if(freqstring.ToLower().Contains('x'))
+                        style = NumberStyles.AllowHexSpecifier;
+
                     var freq =
                         (Uploader.Frequency)
-                            Enum.Parse(typeof (Uploader.Frequency), doCommand(comPort, "ATI3"));
-                    var board =
-                        (Uploader.Board)
-                            Enum.Parse(typeof (Uploader.Board), doCommand(comPort, "ATI2"));
+                            Enum.Parse(typeof (Uploader.Frequency),
+                                int.Parse(freqstring.ToLower().Replace("x", ""), style).ToString());
 
                     ATI3.Text = freq.ToString();
+
+                    style = NumberStyles.Any;
+
+                    var boardstring = doCommand(comPort, "ATI2").Trim();
+
+                    if (boardstring.ToLower().Contains('x'))
+                        style = NumberStyles.AllowHexSpecifier;
+
+                    var board =
+                        (Uploader.Board)
+                            Enum.Parse(typeof (Uploader.Board),
+                                int.Parse(boardstring.ToLower().Replace("x", ""), style).ToString());
 
                     ATI2.Text = board.ToString();
 
@@ -881,9 +897,9 @@ S15: MAX_WINDOW=131
 
                     foreach (var item in items)
                     {
-                        if (item.StartsWith("S"))
+                        //if (item.StartsWith("S"))
                         {
-                            var values = item.Split(':', '=');
+                            var values = item.Split(new char[] { ':', '='}, StringSplitOptions.RemoveEmptyEntries);
 
                             if (values.Length == 3)
                             {
@@ -949,9 +965,9 @@ S15: MAX_WINDOW=131
 
                     foreach (var item in items)
                     {
-                        if (item.StartsWith("S"))
+                        //if (item.StartsWith("S"))
                         {
-                            var values = item.Split(':', '=');
+                            var values = item.Split(new char[] { ':', '=' }, StringSplitOptions.RemoveEmptyEntries);
 
                             if (values.Length == 3)
                             {
@@ -1012,7 +1028,7 @@ S15: MAX_WINDOW=131
                     doCommand(comPort, "ATO");
 
                     lbl_status.Text = "Fail";
-                    CustomMessageBox.Show("Failed to enter command mode");
+                    MsgBox.CustomMessageBox.Show("Failed to enter command mode");
                 }
 
                 comPort.Close();
@@ -1032,7 +1048,7 @@ S15: MAX_WINDOW=131
                 {
                 }
                 lbl_status.Text = "Error";
-                CustomMessageBox.Show("Error during read " + ex);
+                MsgBox.CustomMessageBox.Show("Error during read " + ex);
             }
         }
 
@@ -1200,7 +1216,7 @@ S15: MAX_WINDOW=131
 
         private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            CustomMessageBox.Show(@"The Sik Radios have 2 status LEDs, one red and one green.
+            MsgBox.CustomMessageBox.Show(@"The Sik Radios have 2 status LEDs, one red and one green.
 green LED blinking - searching for another radio 
 green LED solid - link is established with another radio 
 red LED flashing - transmitting data 
@@ -1213,8 +1229,8 @@ red LED solid - in firmware update mode");
 
             try
             {
-                comPort.PortName = MainV2.comPort.BaseStream.PortName;
-                comPort.BaudRate = MainV2.comPort.BaseStream.BaudRate;
+                comPort.PortName = MainV2.comPortName;
+                comPort.BaudRate = MainV2.comPortBaud;
 
                 comPort.ReadTimeout = 4000;
 
@@ -1222,7 +1238,7 @@ red LED solid - in firmware update mode");
             }
             catch
             {
-                CustomMessageBox.Show("Invalid ComPort or in use");
+                MsgBox.CustomMessageBox.Show("Invalid ComPort or in use");
                 return;
             }
 
@@ -1255,7 +1271,7 @@ red LED solid - in firmware update mode");
                 doCommand(comPort, "ATO");
 
                 lbl_status.Text = "Fail";
-                CustomMessageBox.Show("Failed to enter command mode");
+                MsgBox.CustomMessageBox.Show("Failed to enter command mode");
             }
 
             if (comPort.IsOpen)
@@ -1270,7 +1286,7 @@ red LED solid - in firmware update mode");
         private void Progressbar_Click(object sender, EventArgs e)
         {
             beta = !beta;
-            CustomMessageBox.Show("Beta set to " + beta);
+            MsgBox.CustomMessageBox.Show("Beta set to " + beta);
         }
 
         private void linkLabel_mavlink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
