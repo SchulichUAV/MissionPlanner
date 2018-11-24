@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -14,7 +13,7 @@ using Transitions;
 
 namespace MissionPlanner.GCSViews.ConfigurationView
 {
-    public partial class ConfigMount : UserControl, IActivate
+    public partial class ConfigMount : MyUserControl, IActivate
     {
         private readonly Transition _NoErrorTransition;
         private Transition[] _ErrorTransition;

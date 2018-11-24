@@ -64,7 +64,7 @@
     <Compile Include="ZedGraph\ColorSymbolRotator.cs" />
     <Compile Include="ZedGraph\CurveItem.cs" />
     <Compile Include="ZedGraph\CurveList.cs" />
-    <Compile Include="ZedGraph\DataSourcePointList.cs" />
+    <None Include="ZedGraph\DataSourcePointList.cs" />
     <Compile Include="ZedGraph\DateAsOrdinalScale.cs" />
     <Compile Include="ZedGraph\DateScale.cs" />
     <Compile Include="ZedGraph\EllipseObj.cs" />
@@ -221,7 +221,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="System.Drawing.Common">
-      <Version>4.5.0</Version>
+      <Version>4.5.1</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

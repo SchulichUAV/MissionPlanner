@@ -6,7 +6,7 @@ using MissionPlanner.Utilities;
 
 namespace MissionPlanner.GCSViews.ConfigurationView
 {
-    public partial class ConfigBatteryMonitoring : UserControl, IActivate, IDeactivate
+    public partial class ConfigBatteryMonitoring : MyUserControl, IActivate, IDeactivate
     {
         private bool startup;
 
@@ -87,6 +87,10 @@ namespace MissionPlanner.GCSViews.ConfigurationView
             else if (TXT_ampspervolt.Text == (17).ToString() && TXT_divider.Text == (12.02).ToString())
             {
                 CMB_batmonsensortype.SelectedIndex = 5;
+            }
+            else if (TXT_ampspervolt.Text == (24).ToString() && TXT_divider.Text == (18).ToString())
+            {
+                CMB_batmonsensortype.SelectedIndex = 8;
             }
             else
             {
@@ -406,6 +410,11 @@ namespace MissionPlanner.GCSViews.ConfigurationView
             {
                 TXT_divider.Text = (12.02).ToString();
                 TXT_ampspervolt.Text = (39.877).ToString();
+            }
+            else if (selection == 8) // pixhack
+            {
+                TXT_divider.Text = (18).ToString();
+                TXT_ampspervolt.Text = (24).ToString();
             }
 
             // enable to update

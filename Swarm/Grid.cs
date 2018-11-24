@@ -1,14 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Drawing;
-using System.Data;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 using MissionPlanner.Controls;
-using MissionPlanner;
 using OpenTK;
+using SvgNet.SvgGdi;
 
 namespace MissionPlanner.Swarm
 {
@@ -72,7 +68,7 @@ namespace MissionPlanner.Swarm
         {
             base.OnPaint(e);
             MakeCurrent();
-            OnPaint(new PaintEventArgsI(new GL2(), e.ClipRectangle));
+            OnPaint(new PaintEventArgsI(new GL2(this.Handle, Width, Height), e.ClipRectangle));
             this.SwapBuffers();
         }
 

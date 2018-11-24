@@ -21,11 +21,12 @@ namespace MissionPlanner.Utilities
 
         DFLog _dflog = new DFLog();
 
-        BufferedStream basestream;
+        Stream basestream;
         private int _count;
         List<uint> linestartoffset = new List<uint>();
 
-        Dictionary<byte, List<uint>> messageindex = new Dictionary<byte, List<uint>>();
+        List<uint>[] messageindex = new List<uint>[256];
+        List<uint>[] messageindexline = new List<uint>[256];
 
         bool binary = false;
 
@@ -36,12 +37,16 @@ namespace MissionPlanner.Utilities
 
         public CollectionBuffer(Stream instream)
         {
-            for (int a = 0; a <= byte.MaxValue; a++)
+            for (int a = 0; a < messageindex.Length; a++)
             {
-                messageindex[(byte) a] = new List<uint>();
+                messageindex[a] = new List<uint>();
+                messageindexline[a] = new List<uint>();
             }
 
-            basestream = new BufferedStream(instream, 1024*1024*5);
+            basestream = new MemoryStream((int) instream.Length);
+            instream.CopyTo(basestream);
+            basestream.Position = 0;
+            instream.Close();
 
             if (basestream.ReadByte() == BinaryLog.HEAD_BYTE1)
             {
@@ -52,11 +57,11 @@ namespace MissionPlanner.Utilities
             }
 
             // back to start
-            basestream.Seek(0, SeekOrigin.Begin);
-
+            basestream.Position = 0;
+            DateTime start = DateTime.Now;
             setlinecount();
-
-            basestream.Seek(0, SeekOrigin.Begin);
+            Console.WriteLine("CollectionBuffer-linecount: " + (DateTime.Now - start).TotalMilliseconds);
+            basestream.Position = 0;
         }
 
         void setlinecount()
@@ -74,11 +79,12 @@ namespace MissionPlanner.Utilities
                 {
                     var ans = binlog.ReadMessageTypeOffset(basestream, length);
 
-                    if (ans == null)
+                    if (ans.MsgType == 0)
                         continue;
 
                     byte type = ans.Item1;
                     messageindex[type].Add((uint)(ans.Item2));
+                    messageindexline[type].Add((uint) lineCount);
 
                     linestartoffset.Add((uint)(ans.Item2));
                     lineCount++;
@@ -241,30 +247,80 @@ namespace MissionPlanner.Utilities
         public Dictionary<char, string> Unit { get; set; } = new Dictionary<char, string>();
         public Dictionary<char, string> Mult { get; set; } = new Dictionary<char, string>();
 
+        public DFLog.DFItem this[long indexin]
+        {
+            get
+            {
+                var index = (int)indexin;
+
+                long startoffset = linestartoffset[index];
+                long endoffset = startoffset;
+
+                if ((index + 1) >= linestartoffset.Count)
+                {
+                    endoffset = basestream.Length;
+                }
+                else
+                {
+                    endoffset = linestartoffset[index + 1];
+                }
+
+                int length = (int)(endoffset - startoffset);
+
+                // prevent multi io to file
+                lock (locker)
+                {
+                    if (linestartoffset[index] != basestream.Position)
+                        basestream.Seek(linestartoffset[index], SeekOrigin.Begin);
+
+                    if (binary)
+                    {
+                        var items = binlog.ReadMessageObjects(basestream, basestream.Length);
+
+                        //var test = dflog.GetDFItemFromLine(this[index], index);
+
+                        var answer =  new DFLog.DFItem(dflog, items, (int)indexin);
+
+                        return answer;
+                    }
+                    else
+                    {
+                        byte[] data = new byte[length];
+
+                        basestream.Read(data, 0, length);
+
+                        return dflog.GetDFItemFromLine(ASCIIEncoding.ASCII.GetString(data), (int)indexin);
+                    }
+
+                    
+                }
+            }
+        }
+
         public String this[int index]
         {
             get
             {
+                long startoffset = linestartoffset[index];
+                long endoffset = startoffset;
+
+                if ((index + 1) >= linestartoffset.Count)
+                {
+                    endoffset = basestream.Length;
+                }
+                else
+                {
+                    endoffset = linestartoffset[index + 1];
+                }
+
+                int length = (int) (endoffset - startoffset);
+
                 // prevent multi io to file
                 lock (locker)
                 {
                     // return cached value is same index
                     if (indexcachelineno == index)
                         return currentindexcache;
-
-                    long startoffset = linestartoffset[index];
-                    long endoffset = startoffset;
-
-                    if ((index + 1) >= linestartoffset.Count)
-                    {
-                        endoffset = basestream.Length;
-                    }
-                    else
-                    {
-                        endoffset = linestartoffset[index + 1];
-                    }
-
-                    int length = (int) (endoffset - startoffset);
 
                     if (linestartoffset[index] != basestream.Position)
                         basestream.Seek(linestartoffset[index], SeekOrigin.Begin);
@@ -315,7 +371,7 @@ namespace MissionPlanner.Utilities
             while (position < Count)
             {
                 position++;
-                yield return dflog.GetDFItemFromLine(this[position - 1], position - 1);
+                yield return this[(long)position - 1];
             }
         }
 
@@ -328,28 +384,23 @@ namespace MissionPlanner.Utilities
         {
             // get the ids for the passed in types
             SortedSet<long> slist = new SortedSet<long>();
-            foreach (var type in types)
+            foreach (var type in types.Distinct())
             {
                 if (dflog.logformat.ContainsKey(type))
                 {
                     var typeid = (byte) dflog.logformat[type].Id;
 
-                    foreach (var item in messageindex[typeid])
+                    foreach (var item in messageindexline[typeid])
                     {
                         slist.Add(item);
                     }
                 }
             }
 
-            int position = 0; // state
-            while (position < Count)
+            // work through list of lines
+            foreach (var l in slist)
             {
-                position++;
-
-                if (slist.Contains(linestartoffset[position - 1]))
-                {
-                    yield return dflog.GetDFItemFromLine(this[position - 1].ToString(), position - 1);
-                }
+                yield return this[(long) l];
             }
         }
 
@@ -373,6 +424,8 @@ namespace MissionPlanner.Utilities
             basestream.Close();
             linestartoffset.Clear();
             linestartoffset = null;
+            messageindex = null;
+            GC.Collect();
         }
 
         public bool EndOfStream 
@@ -389,9 +442,11 @@ namespace MissionPlanner.Utilities
             {
                 List<string> messagetypes = new List<string>();
 
-                messageindex.ForEach(a => {
-                    if (a.Value.Count > 0) messagetypes.Add(FMT[a.Key].Item2);
-                });
+                for (int a = 0; a < messageindex.Length; a++)
+                {
+                    if (messageindex[a].Count > 0 && FMT.ContainsKey(a))
+                        messagetypes.Add(FMT[a].Item2);
+                }
 
                 return messagetypes;
             }

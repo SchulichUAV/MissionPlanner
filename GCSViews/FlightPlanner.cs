@@ -26,7 +26,6 @@ using GMap.NET.WindowsForms.Markers;
 using Ionic.Zip;
 using log4net;
 using MissionPlanner.Controls;
-using MissionPlanner.Controls.Waypoints;
 using MissionPlanner.Maps;
 using MissionPlanner.Properties;
 using MissionPlanner.Utilities;
@@ -38,7 +37,6 @@ using Feature = SharpKml.Dom.Feature;
 using ILog = log4net.ILog;
 using Placemark = SharpKml.Dom.Placemark;
 using Point = System.Drawing.Point;
-using System.Text.RegularExpressions;
 using GDAL;
 using GeoAPI.CoordinateSystems;
 using GeoAPI.CoordinateSystems.Transformations;
@@ -163,10 +161,13 @@ namespace MissionPlanner.GCSViews
 
             try
             {
-                // get current command list
-                var currentlist = GetCommandList();
-                // add history
-                history.Add(currentlist);
+                if (!quickadd)
+                {
+                    // get current command list
+                    var currentlist = GetCommandList();
+                    // add history
+                    history.Add(currentlist);
+                }
             }
             catch (Exception ex)
             {
@@ -1278,6 +1279,9 @@ namespace MissionPlanner.GCSViews
         {
             // quickadd is for when loading wps from eeprom or file, to prevent slow, loading times
             if (quickadd)
+                return;
+
+            if (Disposing)
                 return;
 
             updateRowNumbers();
@@ -4110,7 +4114,10 @@ namespace MissionPlanner.GCSViews
             quickadd = true;
 
             // mono fix
-            Commands.CurrentCell = null;
+            try
+            {
+                Commands.CurrentCell = null;
+            } catch { }
 
             Commands.Rows.Clear();
 

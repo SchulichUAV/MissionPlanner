@@ -8,24 +8,20 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 using DirectShowLib;
 using GMap.NET;
-using GMap.NET.MapProviders;
 using GMap.NET.WindowsForms;
 using GMap.NET.WindowsForms.Markers;
 using log4net;
-using Microsoft.Scripting.Utils;
 using MissionPlanner.ArduPilot;
 using MissionPlanner.Controls;
 using MissionPlanner.Joystick;
 using MissionPlanner.Log;
 using MissionPlanner.Utilities;
 using MissionPlanner.Warnings;
-using OpenTK;
 using WebCamService;
 using ZedGraph;
 using LogAnalyzer = MissionPlanner.Utilities.LogAnalyzer;
@@ -414,28 +410,33 @@ namespace MissionPlanner.GCSViews
 
 
                 if (lbl1 == null)
+                {
                     lbl1 = new MyLabel();
-
-                lbl1.Location = new Point(x, y);
-                lbl1.Size = new Size(90, 13);
-                lbl1.Text = field;
-                lbl1.Name = field;
-                lbl1.Visible = true;
+                    lbl1.Location = new Point(x, y);
+                    lbl1.Size = new Size(90, 13);
+                    lbl1.Text = field;
+                    lbl1.Name = field;
+                    lbl1.Visible = true;
+                }
 
                 if (lbl2 == null)
+                {
                     lbl2 = new MyLabel();
 
-                lbl2.AutoSize = false;
+                    lbl2.AutoSize = false;
 
-                lbl2.Location = new Point(lbl1.Right + 5, y);
-                lbl2.Size = new Size(50, 13);
+                    lbl2.Location = new Point(lbl1.Right + 5, y);
+                    lbl2.Size = new Size(50, 13);
+
+                    lbl2.Name = field + "value";
+                    lbl2.Visible = true;
+                }
+
                 if (lbl2.DataBindings.Count == 0)
                 {
                     lbl2.DataBindings.Add(new Binding("Text", bindingSourceStatusTab, field, false,
                         DataSourceUpdateMode.Never, "0"));
                 }
-                lbl2.Name = field + "value";
-                lbl2.Visible = true;
                 //lbl2.Text = fieldValue.ToString();
 
                 if (!tabStatus.Controls.Contains(lbl1))
@@ -854,7 +855,7 @@ namespace MissionPlanner.GCSViews
 
                 try
                 {
-                    if (aviwriter != null && vidrec.AddMilliseconds(100) <= DateTime.Now)
+                    if (aviwriter != null && vidrec.AddMilliseconds(1000/25.0) <= DateTime.Now)
                     {
                         vidrec = DateTime.Now;
 
@@ -864,7 +865,7 @@ namespace MissionPlanner.GCSViews
                         // add a frame
                         aviwriter.avi_add(hud1.streamjpg.ToArray(), (uint) hud1.streamjpg.Length);
                         // write header - so even partial files will play
-                        aviwriter.avi_end(hud1.Width, hud1.Height, 10);
+                        aviwriter.avi_end(hud1.Width, hud1.Height, 25);
                     }
                 }
                 catch
@@ -3985,7 +3986,15 @@ namespace MissionPlanner.GCSViews
                     {
                         newlogfile = Path.GetTempFileName() + ".log";
 
-                        BinaryLog.ConvertBin(ofd.FileName, newlogfile);
+                        try
+                        {
+                            BinaryLog.ConvertBin(ofd.FileName, newlogfile);
+                        }
+                        catch (IOException ex)
+                        {
+                            CustomMessageBox.Show("File access issue: " + ex.Message, Strings.ERROR);
+                            return;
+                        }
 
                         ofd.FileName = newlogfile;
                     }

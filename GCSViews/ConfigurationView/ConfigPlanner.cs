@@ -7,7 +7,6 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
 using DirectShowLib;
-using MissionPlanner.ArduPilot;
 using MissionPlanner.Controls;
 using MissionPlanner.Joystick;
 using MissionPlanner.Utilities;
@@ -15,7 +14,7 @@ using WebCamService;
 
 namespace MissionPlanner.GCSViews.ConfigurationView
 {
-    public partial class ConfigPlanner : UserControl, IActivate
+    public partial class ConfigPlanner : MyUserControl, IActivate
     {
         private List<CultureInfo> _languages;
         private bool startup;
@@ -503,7 +502,7 @@ namespace MissionPlanner.GCSViews.ConfigurationView
             if (startup)
                 return;
             Settings.Instance[((ComboBox) sender).Name] = ((ComboBox) sender).Text;
-            MainV2.comPort.MAV.cs.rateattitude = byte.Parse(((ComboBox) sender).Text);
+            MainV2.comPort.MAV.cs.rateattitude = int.Parse(((ComboBox) sender).Text);
 
             MainV2.comPort.requestDatastream(MAVLink.MAV_DATA_STREAM.EXTRA1, MainV2.comPort.MAV.cs.rateattitude);
             // request attitude
@@ -516,7 +515,7 @@ namespace MissionPlanner.GCSViews.ConfigurationView
             if (startup)
                 return;
             Settings.Instance[((ComboBox) sender).Name] = ((ComboBox) sender).Text;
-            MainV2.comPort.MAV.cs.rateposition = byte.Parse(((ComboBox) sender).Text);
+            MainV2.comPort.MAV.cs.rateposition = int.Parse(((ComboBox) sender).Text);
 
             MainV2.comPort.requestDatastream(MAVLink.MAV_DATA_STREAM.POSITION, MainV2.comPort.MAV.cs.rateposition);
             // request gps
@@ -527,7 +526,7 @@ namespace MissionPlanner.GCSViews.ConfigurationView
             if (startup)
                 return;
             Settings.Instance[((ComboBox) sender).Name] = ((ComboBox) sender).Text;
-            MainV2.comPort.MAV.cs.ratestatus = byte.Parse(((ComboBox) sender).Text);
+            MainV2.comPort.MAV.cs.ratestatus = int.Parse(((ComboBox) sender).Text);
 
             MainV2.comPort.requestDatastream(MAVLink.MAV_DATA_STREAM.EXTENDED_STATUS, MainV2.comPort.MAV.cs.ratestatus);
             // mode
@@ -538,7 +537,7 @@ namespace MissionPlanner.GCSViews.ConfigurationView
             if (startup)
                 return;
             Settings.Instance[((ComboBox) sender).Name] = ((ComboBox) sender).Text;
-            MainV2.comPort.MAV.cs.raterc = byte.Parse(((ComboBox) sender).Text);
+            MainV2.comPort.MAV.cs.raterc = int.Parse(((ComboBox) sender).Text);
 
             MainV2.comPort.requestDatastream(MAVLink.MAV_DATA_STREAM.RC_CHANNELS, MainV2.comPort.MAV.cs.raterc);
             // request rc info 
@@ -549,7 +548,7 @@ namespace MissionPlanner.GCSViews.ConfigurationView
             if (startup)
                 return;
             Settings.Instance[((ComboBox) sender).Name] = ((ComboBox) sender).Text;
-            MainV2.comPort.MAV.cs.ratesensors = byte.Parse(((ComboBox) sender).Text);
+            MainV2.comPort.MAV.cs.ratesensors = int.Parse(((ComboBox) sender).Text);
 
             MainV2.comPort.requestDatastream(MAVLink.MAV_DATA_STREAM.EXTRA3, MainV2.comPort.MAV.cs.ratesensors);
             // request extra stuff - tridge

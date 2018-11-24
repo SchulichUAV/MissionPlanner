@@ -2,12 +2,10 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using System.Drawing.Imaging;
 using System.Drawing;
-using System.Net.Mime;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
@@ -15,7 +13,6 @@ using GMap.NET;
 using GMap.NET.WindowsForms;
 using MissionPlanner.Utilities;
 using GMap.NET.MapProviders;
-using GMap.NET.Projections;
 using Microsoft.Scripting.Utils;
 using MathHelper = MissionPlanner.Utilities.MathHelper;
 using Vector3 = OpenTK.Vector3;
@@ -25,9 +22,6 @@ namespace MissionPlanner.Controls
     public class OpenGLtest2 : GLControl, IDeactivate
     {
         public static OpenGLtest2 instance;
-
-        // terrain image
-        Bitmap _terrain = new Bitmap(640, 480);
 
         int green = 0;
 
@@ -227,20 +221,36 @@ namespace MissionPlanner.Controls
             return norm;
         }
 
-       static int generateTexture(Bitmap image)
+        static int generateTexture(Bitmap image)
         {
             BitmapData data = image.LockBits(new System.Drawing.Rectangle(0, 0, image.Width, image.Height),
                 ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
+            int texture = generateTexture(data);
+
+            image.UnlockBits(data);
+
+            if (texture == 0)
+            {
+                image.Dispose();
+                var error = GL.GetError();
+            }
+            else
+            {
+                image.Dispose();
+            }
+
+            return texture;
+        }
+
+        static int generateTexture(BitmapData data)
+        {
             int texture = 0;
    
             GL.GenTextures(1, out texture);
 
             if (texture == 0)
             {
-                image.UnlockBits(data);
-                image.Dispose();
-                var error = GL.GetError();
                 return 0;
             }
 
@@ -252,14 +262,14 @@ namespace MissionPlanner.Controls
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, data.Width, data.Height, 0,
                 OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
 
-            image.UnlockBits(data);
+
 
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter,
                 (int) TextureMinFilter.Nearest);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter,
                 (int) TextureMagFilter.Nearest);
 
-            image.Dispose();
+            GL.GenerateTextureMipmap(texture);
 
             return texture;
         }
@@ -410,8 +420,8 @@ namespace MissionPlanner.Controls
             GL.Enable(EnableCap.Fog);
             GL.Disable(EnableCap.Lighting);
          
-            //Lighting.SetupAmbient(1f);
-            //Lighting.SetDefaultMaterial(1f);
+            Lighting.SetupAmbient(0.1f);
+            Lighting.SetDefaultMaterial(1f);
       //      Lighting.SetupLightZero(new Vector3d(cameraX, cameraY, cameraZ + 100), 0f);
 
 
@@ -422,7 +432,7 @@ namespace MissionPlanner.Controls
             GL.Fog(FogParameter.FogEnd, (float) 2000);
 
             GL.Disable(EnableCap.DepthTest);
-            GL.DepthFunc(DepthFunction.Always);
+            //GL.DepthFunc(DepthFunction.Always);
 
             var texlist = textureid.ToArray().ToSortedList((a, b) => { return a.Value.zoom.CompareTo(b.Value.zoom); });
 
@@ -450,75 +460,7 @@ namespace MissionPlanner.Controls
 
                 GL.Clear(ClearBufferMask.DepthBufferBit);
 
-                //GL.Enable(EnableCap.Texture2D);
-                //GL.BindTexture(TextureTarget.Texture2D, tidict.Value.idtexture);
-
-
-                
-
                 GL.Enable(EnableCap.DepthTest);
-
-
-                /*
-
-                                // generate terrain
-                                GL.Begin(PrimitiveType.TriangleStrip);
-                                GL.PointSize((float) (20));
-
-                                //GL.Begin(PrimitiveType.Points);
-                                GL.Color3(Color.Blue);
-
-                                var latlng = prj.FromPixelToLatLng(xr, yr, tidict.Value.zoom);
-                                var utm = convertCoords(latlng);
-                                utm[2] = srtm.getAltitude(latlng.Lat, latlng.Lng).alt;
-
-                                GL.TexCoord2(0.0, 0.0);
-                                GL.Vertex3(utm[0], utm[1], utm[2]);
-
-                                // next down
-                                latlng = prj.FromPixelToLatLng(xr, y2, tidict.Value.zoom);
-                                utm = convertCoords(latlng);
-                                utm[2] = srtm.getAltitude(latlng.Lat, latlng.Lng).alt;
-
-                                GL.TexCoord2(0, 1);
-                                GL.Vertex3(utm[0], utm[1], utm[2]);
-
-                                // next right
-                                latlng = prj.FromPixelToLatLng(x2, yr, tidict.Value.zoom);
-                                utm = convertCoords(latlng);
-                                utm[2] = srtm.getAltitude(latlng.Lat, latlng.Lng).alt;
-
-                                GL.TexCoord2(1, 0);
-                                GL.Vertex3(utm[0], utm[1], utm[2]);
-
-                                // next right down
-                                latlng = prj.FromPixelToLatLng(x2, y2, tidict.Value.zoom);
-                                utm = convertCoords(latlng);
-                                utm[2] = srtm.getAltitude(latlng.Lat, latlng.Lng).alt;
-
-                                GL.TexCoord2((float)1, 1);
-                                GL.Vertex3(utm[0], utm[1], utm[2]);
-                */
-                /*
-                GL.Begin(PrimitiveType.TriangleStrip);
-                for (int i = 0; i < tidict.Value.vertex.Count; i++)
-                {
-                    GL.TexCoord2((double)tidict.Value.texture[i].X, tidict.Value.texture[i].Y);
-                    GL.Vertex3((double)tidict.Value.vertex[i].X, tidict.Value.vertex[i].Y, tidict.Value.vertex[i].Z);
-                }
-
-                GL.End();
-                */
-
-
-                //var dist = LocationCenter.GetDistance(latlng);
-
-
-
-                //if (dist < 500)
-                //    pxstep = 32;
-
-                //GL.Begin(PrimitiveType.TriangleStrip);
 
                 if (tidict.Value.texture.Count != 0)
                     tidict.Value.Draw();
@@ -559,7 +501,10 @@ namespace MissionPlanner.Controls
                     GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
                     GL.Enable(EnableCap.Texture2D);
                     GL.BindTexture(TextureTarget.Texture2D, green);
-                    foreach (var point in GCSViews.FlightPlanner.instance.pointlist)
+                    var list = GCSViews.FlightPlanner.instance.pointlist.ToList();
+                    if (MainV2.comPort.MAV.cs.TargetLocation != PointLatLngAlt.Zero)
+                        list.Add(MainV2.comPort.MAV.cs.TargetLocation);
+                    foreach (var point in list)
                     {
                         if (point == null)
                             continue;
@@ -568,10 +513,10 @@ namespace MissionPlanner.Controls
 
                         GL.Color3(Color.Red); //tr
                         GL.TexCoord2(0, 0);
-                        GL.Vertex3(Math.Sin(MathHelper.Radians(rpy.Z+90)) * 2 + co[0], Math.Cos(MathHelper.Radians(rpy.Z + 90)) * 2 + co[1] , co[2] + 1);
+                        GL.Vertex3(Math.Sin(MathHelper.Radians(rpy.Z+90)) * 2 + co[0], Math.Cos(MathHelper.Radians(rpy.Z + 90)) * 2 + co[1] , co[2] + 10);
                         GL.Color3(Color.Green); //tl
                         GL.TexCoord2(1, 0);
-                        GL.Vertex3( co[0] - Math.Sin(MathHelper.Radians(rpy.Z + 90))*2,  co[1] - Math.Cos(MathHelper.Radians(rpy.Z + 90)) * 2, co[2] + 1);
+                        GL.Vertex3( co[0] - Math.Sin(MathHelper.Radians(rpy.Z + 90))*2,  co[1] - Math.Cos(MathHelper.Radians(rpy.Z + 90)) * 2, co[2] + 10);
                         GL.Color3(Color.Blue); // br
                         GL.TexCoord2(0, 1);
                         GL.Vertex3(co[0] + Math.Sin(MathHelper.Radians(rpy.Z + 90)) * 2, co[1] + Math.Cos(MathHelper.Radians(rpy.Z + 90)) * 2, co[2] - 1);
@@ -600,7 +545,7 @@ namespace MissionPlanner.Controls
                 this.SwapBuffers();
 
 
-                Context.MakeCurrent(null);
+                //Context.MakeCurrent(null);
             }
             catch
             {
@@ -609,7 +554,7 @@ namespace MissionPlanner.Controls
             //this.Invalidate();
 
             var delta = DateTime.Now - start;
-            Console.WriteLine("OpenGLTest2 {0}", delta.TotalMilliseconds);
+            Console.Write("OpenGLTest2 {0}\r", delta.TotalMilliseconds);
         }
 
         private void generateTextures()
@@ -626,6 +571,7 @@ namespace MissionPlanner.Controls
             //if (center.GetDistance(oldcenter) > 30)
             {
                 oldcenter = new PointLatLngAlt(center);
+                zoom = 18;
 
                 for (int a = 12; a <= zoom; a++)
                 {
@@ -633,7 +579,7 @@ namespace MissionPlanner.Controls
 
                     // 200m at max zoom
                     // step at 0 zoom
-                   var distm = MathHelper.map(a, 0, zoom, 3000, 100);
+                   var distm = MathHelper.map(a, 0, zoom, 3000, 10);
 
                     //Console.WriteLine("tiles z {0} max {1} dist {2}", a, zoom, distm);
 
@@ -672,12 +618,19 @@ namespace MissionPlanner.Controls
                      temp?.Cleanup();
                  });
              });
+            
+            //https://wiki.openstreetmap.org/wiki/Zoom_levels
+            var C = 2 * Math.PI * 6378137.000;
+            // horizontal distance by each tile square
+            var stile = C * Math.Cos(center.Lat) / Math.Pow(2, zoom);
 
             var pxstep = 2;     
 
             // get tiles & combine into one
             foreach (var tilearea in tileArea)
             {
+                stile = C * Math.Cos(center.Lat) / Math.Pow(2, tilearea.zoom);
+
                 if (tilearea.zoom == 20)
                     pxstep = 256;
                 if (tilearea.zoom == 19)
@@ -829,8 +782,9 @@ namespace MissionPlanner.Controls
         private void test_Load(object sender, EventArgs e)
         {
             GL.Enable(EnableCap.DepthTest);
-// GL.Enable(EnableCap.Light0);
+ 
             GL.Enable(EnableCap.Lighting);
+            GL.Enable(EnableCap.Light0);
             GL.Enable(EnableCap.ColorMaterial);
             GL.Enable(EnableCap.Normalize);
 
@@ -862,7 +816,18 @@ namespace MissionPlanner.Controls
 
         public class tileInfo: IDisposable
         {
-            public Image img { get; set;}
+            private Image _img = null;
+            private BitmapData _data = null;
+            public Image img
+            {
+                get { return _img; }
+                set
+                {
+                    _img = value;
+                    _data = ((Bitmap)_img).LockBits(new System.Drawing.Rectangle(0, 0, _img.Width, _img.Height),
+                        ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                }
+            }
             public int zoom { get; set; }
             public GPoint point { get; set; }
 
@@ -879,7 +844,7 @@ namespace MissionPlanner.Controls
                     {
                         try
                         {
-                            _textid = generateTexture((Bitmap)img);
+                            _textid = generateTexture(_data);
                         }
                         catch
                         {

@@ -488,7 +488,7 @@ namespace MissionPlanner
                     return _ch3percent;
                 try
                 {
-                    if (parent.parent.MAV.param.ContainsKey("RC3_MIN") &&
+                    if (parent != null && parent.parent.MAV.param.ContainsKey("RC3_MIN") &&
                         parent.parent.MAV.param.ContainsKey("RC3_MAX"))
                     {
                         return
@@ -688,6 +688,13 @@ namespace MissionPlanner
             }
         }
 
+        //https://en.wikipedia.org/wiki/Load_factor_(aeronautics)
+        [DisplayText("Turn Gs (load)")]
+        public float turng
+        {
+            get { return (float)(1 / Math.Cos(MathHelper.deg2rad * roll)); }
+        }
+
         // turn radius
         [DisplayText("Turn Radius (dist)")]
         public float radius
@@ -752,7 +759,7 @@ namespace MissionPlanner
             set { _messagehigh = value; }
         }
 
-        private string _messagehigh;
+        private string _messagehigh = "";
         public DateTime messageHighTime { get; set; }
 
         //battery
@@ -882,6 +889,9 @@ namespace MissionPlanner
             get { return _movingbase; }
             set
             {
+                if(value == null)
+                    _movingbase = new PointLatLngAlt();
+
                 if (_movingbase.Lat != value.Lat || _movingbase.Lng != value.Lng || _movingbase.Alt
                     != value.Alt)
                     _movingbase = value;
@@ -904,6 +914,8 @@ namespace MissionPlanner
         {
             get { return new PointLatLngAlt(lat, lng, altasl); }
         }
+
+        public PointLatLngAlt TargetLocation { get; set; } = PointLatLngAlt.Zero;
 
         public float GeoFenceDist
         {
@@ -1210,17 +1222,17 @@ namespace MissionPlanner
         public float accel_cal_z { get; set; }
 
         // requested stream rates
-        public byte rateattitude { get; set; }
-        public byte rateposition { get; set; }
-        public byte ratestatus { get; set; }
-        public byte ratesensors { get; set; }
-        public byte raterc { get; set; }
+        public int rateattitude { get; set; }
+        public int rateposition { get; set; }
+        public int ratestatus { get; set; }
+        public int ratesensors { get; set; }
+        public int raterc { get; set; }
 
-        public static byte rateattitudebackup;
-        public static byte ratepositionbackup;
-        public static byte ratestatusbackup;
-        public static byte ratesensorsbackup;
-        public static byte ratercbackup;
+        public static int rateattitudebackup;
+        public static int ratepositionbackup;
+        public static int ratestatusbackup;
+        public static int ratesensorsbackup;
+        public static int ratercbackup;
 
         // reference
         public DateTime datetime { get; set; }
@@ -1377,6 +1389,17 @@ namespace MissionPlanner
         public short rcoverridech6;// { get; set; }
         public short rcoverridech7;// { get; set; }
         public short rcoverridech8;// { get; set; }
+
+        public short rcoverridech9;//{ get; set; }
+        public short rcoverridech10;// { get; set; }
+        public short rcoverridech11;//{ get; set; }
+        public short rcoverridech12;//{ get; set; }
+        public short rcoverridech13;// { get; set; }
+        public short rcoverridech14;// { get; set; }
+        public short rcoverridech15;// { get; set; }
+        public short rcoverridech16;// { get; set; }
+        public short rcoverridech17;// { get; set; }
+        public short rcoverridech18;// { get; set; }
 
         public Mavlink_Sensors sensors_enabled = new Mavlink_Sensors();
         public Mavlink_Sensors sensors_health = new Mavlink_Sensors();
@@ -1639,6 +1662,34 @@ namespace MissionPlanner
                         MAV.clearPacket((uint) MAVLink.MAVLINK_MSG_ID.RC_CHANNELS_SCALED);
                     }
 
+                    mavLinkMessage = MAV.getPacket((uint)MAVLink.MAVLINK_MSG_ID.LOCAL_POSITION_NED);
+
+                    if (mavLinkMessage != null) 
+                    {
+                        var lpned = mavLinkMessage.ToStructure<MAVLink.mavlink_local_position_ned_t>();
+
+                        var loc = HomeLocation.gps_offset(lpned.y, lpned.x);
+
+                        //lat = loc.Lat;
+                        //lng = loc.Lng;
+                        //alt = (float)(loc.Alt + lpned.z);
+                    }
+
+                    mavLinkMessage = MAV.getPacket((uint)MAVLink.MAVLINK_MSG_ID.POSITION_TARGET_GLOBAL_INT);
+
+                    if (mavLinkMessage != null)
+                    {
+                        var postraget = mavLinkMessage.ToStructure<MAVLink.mavlink_position_target_global_int_t>();
+
+                        if(postraget.coordinate_frame == (byte)MAVLink.MAV_FRAME.GLOBAL_INT)
+                            TargetLocation = new PointLatLngAlt(postraget.lat_int / 1e7, postraget.lon_int / 1e7, postraget.alt,
+                                postraget.type_mask.ToString());
+
+                        if (postraget.coordinate_frame == (byte)MAVLink.MAV_FRAME.GLOBAL_RELATIVE_ALT)
+                            TargetLocation = new PointLatLngAlt(postraget.lat_int / 1e7, postraget.lon_int / 1e7, postraget.alt + HomeAlt,
+                                postraget.type_mask.ToString());
+                    }
+
                     mavLinkMessage = MAV.getPacket((uint) MAVLink.MAVLINK_MSG_ID.AUTOPILOT_VERSION);
 
                     if (mavLinkMessage != null)
@@ -1899,7 +1950,8 @@ namespace MissionPlanner
                                 {
                                     case MAVLink.EKF_STATUS_FLAGS.EKF_ATTITUDE: // step 1
                                     case MAVLink.EKF_STATUS_FLAGS.EKF_VELOCITY_HORIZ: // with pos
-                                        ekfstatus = 1;
+                                        if (gpsstatus > 0) // we have gps and dont have vel_hoz
+                                            ekfstatus = 1;
                                         break;
                                     case MAVLink.EKF_STATUS_FLAGS.EKF_VELOCITY_VERT: // with pos
                                     //case MAVLink.EKF_STATUS_FLAGS.EKF_POS_HORIZ_REL: // optical flow

@@ -1,17 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
-using System.Web;
 using System.Windows.Forms;
 using log4net;
-using MissionPlanner.Utilities;
 using SharpKml.Base;
 using SharpKml.Dom;
 using Newtonsoft.Json;
@@ -178,7 +174,7 @@ namespace MissionPlanner.Utilities
                     //url = url.Replace(" HTTP/1.0", "");
                     //url = url.Replace(" HTTP/1.1", "");
 
-                    Tracking.AddEvent("HTTPServer", "Get", url, "");
+                    //Tracking.AddEvent("HTTPServer", "Get", url, "");
 /////////////////////////////////////////////////////////////////
                     if (url.Contains(" /websocket/server"))
                     {

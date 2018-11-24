@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -21,7 +19,6 @@ using log4net;
 using MissionPlanner.ArduPilot;
 using MissionPlanner.GCSViews;
 using MissionPlanner.Maps;
-using MissionPlanner.Properties;
 using MissionPlanner.Utilities;
 using ProjNet.CoordinateSystems;
 using ProjNet.CoordinateSystems.Transformations;
@@ -538,7 +535,7 @@ namespace MissionPlanner.Grid
         }
 
         // Do Work
-        private void domainUpDown1_ValueChanged(object sender, EventArgs e)
+        private async void domainUpDown1_ValueChanged(object sender, EventArgs e)
         {
             if (loading)
                 return;
@@ -560,7 +557,7 @@ namespace MissionPlanner.Grid
             }
             else
             {
-                grid = Utilities.Grid.CreateGrid(list, CurrentState.fromDistDisplayUnit((double) NUM_altitude.Value),
+                grid = await Utilities.Grid.CreateGridAsync(list, CurrentState.fromDistDisplayUnit((double) NUM_altitude.Value),
                     (double) NUM_Distance.Value, (double) NUM_spacing.Value, (double) NUM_angle.Value,
                     (double) NUM_overshoot.Value, (double) NUM_overshoot2.Value,
                     (Utilities.Grid.StartPosition) Enum.Parse(typeof(Utilities.Grid.StartPosition), CMB_startfrom.Text), false,
@@ -769,7 +766,7 @@ namespace MissionPlanner.Grid
                     lbl_distance.Text = distance.ToString("0.##") + " miles";
                 }
 
-                lbl_spacing.Text = (NUM_spacing.Value * 3.2808399m).ToString("#") + " ft";
+                lbl_spacing.Text = (NUM_spacing.Value * 3.2808399m).ToString("#.#") + " ft";
                 lbl_grndres.Text = inchpixel;
                 lbl_distbetweenlines.Text = (NUM_Distance.Value * 3.2808399m).ToString("0.##") + " ft";
                 lbl_footprint.Text = feet_fovH + " x " + feet_fovV + " ft";
@@ -781,7 +778,7 @@ namespace MissionPlanner.Grid
                 // Meters
                 lbl_area.Text = calcpolygonarea(list).ToString("#") + " m^2";
                 lbl_distance.Text = routetotal.ToString("0.##") + " km";
-                lbl_spacing.Text = NUM_spacing.Value.ToString("#") + " m";
+                lbl_spacing.Text = NUM_spacing.Value.ToString("0.#") + " m";
                 lbl_grndres.Text = TXT_cmpixel.Text;
                 lbl_distbetweenlines.Text = NUM_Distance.Value.ToString("0.##") + " m";
                 lbl_footprint.Text = TXT_fovH.Text + " x " + TXT_fovV.Text + " m";

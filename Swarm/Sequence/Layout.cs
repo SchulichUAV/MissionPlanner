@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using MissionPlanner.Utilities;
 using Newtonsoft.Json;
 
@@ -23,7 +19,7 @@ namespace MissionPlanner.Swarm.Sequence
 
         public void Save(string filename)
         {
-            var json = JsonConvert.SerializeObject(this);
+            var json = JsonConvert.SerializeObject(this, Formatting.Indented);
 
             File.WriteAllText(filename, json);
         }
