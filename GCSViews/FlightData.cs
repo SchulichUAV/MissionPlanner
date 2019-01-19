@@ -4479,6 +4479,7 @@ namespace MissionPlanner.GCSViews
         {
             try
             {
+                CustomMessageBox.Show("Terminating Plane");
                 MainV2.comPort.setParam("AFS_TERMINATE", 1.0f, true);
             }
             catch
@@ -4486,6 +4487,7 @@ namespace MissionPlanner.GCSViews
                 CustomMessageBox.Show(String.Format(Strings.ErrorSetValueFailed, "AFS_TERMINATION"), Strings.ERROR);
             }
         }
+
         private void setViewCountToolStripMenuItem_Click(object sender, EventArgs e)
         {
             string cols = "2", rows = "3";
