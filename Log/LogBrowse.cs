@@ -9,6 +9,7 @@ using log4net;
 using ZedGraph; // Graphs
 using System.Xml;
 using System.Collections;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -378,8 +379,6 @@ namespace MissionPlanner.Log
             myGMAP1.Overlays.Add(mapoverlay);
             myGMAP1.Overlays.Add(markeroverlay);
 
-            //chk_time.Checked = true;
-
             dataGridView1.RowUnshared += dataGridView1_RowUnshared;
 
             MissionPlanner.Utilities.Tracking.AddPage(this.GetType().ToString(), this.Text);
@@ -600,6 +599,8 @@ namespace MissionPlanner.Log
 
                 foreach (var msgid in logdata.FMT)
                 {
+                    if (msgid.Value.Item4 == null)
+                        continue;
                     var colsplit = msgid.Value.Item4.FirstOrDefault().ToString().Split(',').Length;
                     colcount = Math.Max(colcount, (msgid.Value.Item4.Length + typecoloum + colsplit));
                 }
@@ -622,7 +623,6 @@ namespace MissionPlanner.Log
 
         void LoadLog2(String FileName, CollectionBuffer logdata, int colcount)
         {
-
             this.Text = "Log Browser - " + Path.GetFileName(FileName);
 
             CreateChart(zg1);
@@ -630,7 +630,21 @@ namespace MissionPlanner.Log
             ResetTreeView(logdata.SeenMessageTypes);
 
             zg1_ZoomEvent(zg1, null, null);
-            
+
+            chk_datagrid.Checked = Settings.Instance.GetBoolean("LB_Grid", false);
+            chk_time.Checked = Settings.Instance.GetBoolean("LB_Time", true);
+            CHK_map.Checked = Settings.Instance.GetBoolean("LB_Map", false);
+            chk_errors.Checked = Settings.Instance.GetBoolean("LB_Error", true);
+            chk_mode.Checked = Settings.Instance.GetBoolean("LB_Mode", true);
+            chk_msg.Checked = Settings.Instance.GetBoolean("LB_MSG", true);
+
+            chk_datagrid.CheckedChanged += (e, a) => { Settings.Instance["LB_Grid"] = chk_datagrid.Checked.ToString(); };
+            chk_time.CheckedChanged += (e, a) => { Settings.Instance["LB_Time"] = chk_time.Checked.ToString(); };
+            CHK_map.CheckedChanged += (e, a) => { Settings.Instance["LB_Map"] = CHK_map.Checked.ToString(); };
+            chk_errors.CheckedChanged += (e, a) => { Settings.Instance["LB_Error"] = chk_errors.Checked.ToString(); };
+            chk_mode.CheckedChanged += (e, a) => { Settings.Instance["LB_Mode"] = chk_mode.Checked.ToString(); };
+            chk_msg.CheckedChanged += (e, a) => { Settings.Instance["LB_MSG"] = chk_msg.Checked.ToString(); };
+
             Loading.Close();
 
             if (dflog.logformat.Count == 0)
@@ -998,6 +1012,8 @@ namespace MissionPlanner.Log
             //myPane.YAxis.Scale.Min = -1;
             //myPane.YAxis.Scale.Max = 1;
 
+            zg1.IsShowCursorValues = true;
+
             // Fill the axis background with a gradient
             //myPane.Chart.Fill = new Fill(Color.White, Color.LightGray, 45.0f);
 
@@ -1356,6 +1372,9 @@ namespace MissionPlanner.Log
                             b = date.XLDate;
                         }
 
+                        if (item.items.Length <= index)
+                            continue;
+
                         string mode = "Err: " + ((DFLog.error_subsystem) int.Parse(item.items[index].ToString())) +
                                       "-" +
                                       item.items[index2].ToString().Trim();
@@ -1429,6 +1448,9 @@ namespace MissionPlanner.Log
                             XDate date = new XDate(item.time);
                             a = date.XLDate;
                         }
+
+                        if (item.items.Length <= index)
+                            continue;
 
                         string mode = item.items[index].ToString().Trim();
 
@@ -1537,6 +1559,9 @@ namespace MissionPlanner.Log
                             a = date.XLDate;
                         }
 
+                        if(item.items.Length <= index)
+                            continue;
+
                         string mode = item.items[index].ToString().Trim();
                         if (top)
                         {
@@ -1615,6 +1640,9 @@ namespace MissionPlanner.Log
                                 index = index2;
                             }
                         }
+
+                        if (item.items.Length <= index)
+                            continue;
 
                         string time = double.Parse(item.items[index]).ToString();
                         UInt64 tempt;
@@ -2344,11 +2372,30 @@ namespace MissionPlanner.Log
                     d=DrawMSG();
 
                 if (!chk_time.Checked && CHK_map.Checked)
-                    e=DrawMap((long)sender.GraphPane.XAxis.Scale.Min, (long)sender.GraphPane.XAxis.Scale.Max);
+                {
+                    if (sender.GraphPane.CurveList.Count == 0)
+                    {
+                        e = DrawMap();
+                    }
+                    else
+                    {
+                        e = DrawMap((long) sender.GraphPane.XAxis.Scale.Min, (long) sender.GraphPane.XAxis.Scale.Max);
+                    }
+                }
 
                 if (chk_time.Checked && CHK_map.Checked)
-                    e=DrawMap(dflog.GetLineNoFromTime(logdata, new XDate(sender.GraphPane.XAxis.Scale.Min).DateTime),
-                        dflog.GetLineNoFromTime(logdata, new XDate(sender.GraphPane.XAxis.Scale.Max).DateTime));
+                {
+                    if (sender.GraphPane.CurveList.Count == 0)
+                    {
+                        e = DrawMap();
+                    }
+                    else
+                    {
+                        e = DrawMap(
+                            dflog.GetLineNoFromTime(logdata, new XDate(sender.GraphPane.XAxis.Scale.Min).DateTime),
+                            dflog.GetLineNoFromTime(logdata, new XDate(sender.GraphPane.XAxis.Scale.Max).DateTime));
+                    }
+                }
 
                 if(a!= null)
                     await a;
@@ -2501,6 +2548,7 @@ namespace MissionPlanner.Log
                         zg1.GraphPane.CurveList.Remove(item);
                 }
 
+                zg1.AxisChange();
                 zg1.Invalidate();
             }
         }
@@ -2618,7 +2666,15 @@ namespace MissionPlanner.Log
             double x, y;
             zg1.GraphPane.ReverseTransform(ptClick, out x, out y);
 
-            GoToSample((int) x, true, false, true);
+            try
+            {
+                if (chk_time.Checked)
+                {
+                    x = dflog.GetLineNoFromTime(logdata, XDate.XLDateToDateTime(x));
+                }
+                //TODO - time fails
+                GoToSample((int) x, true, false, true);
+            } catch { }
         }
 
         private void scrollGrid(DataGridView dataGridView, int index)
@@ -2863,12 +2919,12 @@ namespace MissionPlanner.Log
 
             if (chk_time.Checked)
             {
-                zg1.GraphPane.XAxis.Title.Text = "Time (sec)";
-
                 zg1.GraphPane.XAxis.Type = AxisType.Date;
                 zg1.GraphPane.XAxis.Scale.Format = "HH:mm:ss.fff";
+                zg1.GraphPane.XAxis.Title.Text = "Time (sec)";
                 zg1.GraphPane.XAxis.Scale.MajorUnit = DateUnit.Minute;
                 zg1.GraphPane.XAxis.Scale.MinorUnit = DateUnit.Second;
+                zg1.GraphPane.YAxis.Title.Text = "Output";
             }
             else
             {
@@ -3069,7 +3125,10 @@ namespace MissionPlanner.Log
 
         private void LogBrowse_Resize(object sender, EventArgs e)
         {
-            splitContainerZgGrid.SplitterDistance = splitContainerZgGrid.Height - splitContainerButGrid.Panel1.MinimumSize.Height - splitContainerButGrid.Panel2.Height;
+            if(chk_datagrid.Checked)
+                splitContainerZgGrid.SplitterDistance = this.Height / 2;
+            if (!chk_datagrid.Checked)
+                splitContainerZgGrid.SplitterDistance = this.Height - splitContainerButGrid.Panel2.Height;
         }
     }
 }

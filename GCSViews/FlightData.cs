@@ -473,7 +473,7 @@ namespace MissionPlanner.GCSViews
             if (CB_tuning.Checked)
                 ZedGraphTimer.Start();
 
-            hud1.altunit = CurrentState.DistanceUnit;
+            hud1.altunit = CurrentState.AltUnit;
             hud1.speedunit = CurrentState.SpeedUnit;
             hud1.distunit = CurrentState.DistanceUnit;
 
@@ -1292,7 +1292,7 @@ namespace MissionPlanner.GCSViews
 
                             
                             // cleanup old - no markers where added, so remove all old 
-                            if (MainV2.comPort.MAV.camerapoints.Count == 0)
+                            if (MainV2.comPort.MAV.camerapoints.Count < photosoverlay.Markers.Count)
                                 photosoverlay.Markers.Clear();
 
                             var min_interval = 0.0;
@@ -2773,26 +2773,22 @@ namespace MissionPlanner.GCSViews
 
         private void zg1_DoubleClick(object sender, EventArgs e)
         {
-            string formname = "select";
-            Form selectform = Application.OpenForms[formname];
-            if(selectform != null)
-            {
-                selectform.WindowState = FormWindowState.Minimized;
-                selectform.Show();
-                selectform.WindowState = FormWindowState.Normal;
-                return;
-            }
 
-            selectform = new Form
+            var selectform = new Form
             {
-                Name = formname,
+                Name = "select",
                 Width = 50,
-                Height = 550,
-                Text = "Graph This"
+                Height = 50,
+                Text = "Display This",
+                AutoSize = true,
+                StartPosition = FormStartPosition.CenterParent,
+                MaximizeBox = false,
+                MinimizeBox = false,
+                AutoScroll = true
             };
 
-            int x = 10;
-            int y = 10;
+            int x = 5;
+            int y = 2;
 
             {
                 CheckBox chk_box = new CheckBox();
@@ -2818,33 +2814,24 @@ namespace MissionPlanner.GCSViews
             foreach (var field in test.GetProperties())
             {
                 // field.Name has the field's name.
-                object fieldValue;
-                TypeCode typeCode;
-                try
-                {
-                    fieldValue = field.GetValue(thisBoxed, null); // Get value
-
-                    if (fieldValue == null)
-                        continue;
-
-                    // Get the TypeCode enumeration. Multiple types get mapped to a common typecode.
-                    typeCode = Type.GetTypeCode(fieldValue.GetType());
-                }
-                catch
-                {
+                object fieldValue = field.GetValue(thisBoxed, null); // Get value
+                if (fieldValue == null)
                     continue;
-                }
 
-                if (!(typeCode == TypeCode.Single || typeCode == TypeCode.Double || 
-                    typeCode == TypeCode.Int32 || typeCode == TypeCode.UInt16))
+                if (!fieldValue.IsNumber())
                     continue;
 
                 max_length = Math.Max(max_length, TextRenderer.MeasureText(field.Name, selectform.Font).Width);
                 fields.Add(field.Name);
             }
-            max_length += 15;
-            fields.Sort();          
+            max_length += 25;
+            fields.Sort();
 
+            int col_count = (int)(Screen.FromControl(this).Bounds.Width * 0.8f) / max_length;
+            int row_count = fields.Count / col_count + ((fields.Count % col_count == 0) ? 0 : 1);
+            int row_height = 20;
+
+            int i = 1;
             foreach (var field in fields)
             {
                 CheckBox chk_box = new CheckBox();
@@ -2905,21 +2892,23 @@ namespace MissionPlanner.GCSViews
                 chk_box.Text = field;
                 chk_box.Name = field;
                 chk_box.Tag = "custom";
-                chk_box.Location = new Point(x, y);
-                chk_box.Size = new Size(100, 20);
+                chk_box.Location = new Point(5 + (i / row_count) * (max_length + 5), 2 + (i % row_count) * row_height);
+                chk_box.Size = new Size(120, 20);
                 chk_box.CheckedChanged += chk_box_CheckedChanged;
+                chk_box.AutoSize = true;
 
                 selectform.Controls.Add(chk_box);
 
                 x += 0;
                 y += 20;
+                i++;
 
                 if (y > selectform.Height - 50)
                 {
-                    x += 100;
+                    x += 120;
                     y = 10;
 
-                    selectform.Width = x + 100;
+                    selectform.Width = x + 120;
                 }
             }
 
@@ -2947,6 +2936,7 @@ namespace MissionPlanner.GCSViews
                 MaximizeBox = false,
                 MinimizeBox = false,
                 AutoScroll = true
+
             };
             ThemeManager.ApplyThemeTo(selectform);
 
@@ -2966,9 +2956,7 @@ namespace MissionPlanner.GCSViews
                 // Get the TypeCode enumeration. Multiple types get mapped to a common typecode.
                 TypeCode typeCode = Type.GetTypeCode(fieldValue.GetType());
 
-                if (
-                    !(typeCode == TypeCode.Single || typeCode == TypeCode.Double || typeCode == TypeCode.Int32 ||
-                      typeCode == TypeCode.UInt16))
+                if (!fieldValue.IsNumber())
                     continue;
 
                 max_length = Math.Max(max_length, TextRenderer.MeasureText(field.Name, selectform.Font).Width);
@@ -2991,7 +2979,8 @@ namespace MissionPlanner.GCSViews
                     Tag = "custom",
                     Location = new Point(5 + (i/row_count)*(max_length + 5), 2 + (i%row_count)*row_height),
                     Size = new Size(max_length, row_height),
-                    Checked = hud1.CustomItems.ContainsKey(fields[i])
+                    Checked = hud1.CustomItems.ContainsKey(fields[i]),
+                    AutoSize = true
                 };
                 chk_box.CheckedChanged += chk_box_hud_UserItem_CheckedChanged;
                 if (chk_box.Checked)
@@ -3337,6 +3326,7 @@ namespace MissionPlanner.GCSViews
                 MaximizeBox = false,
                 MinimizeBox = false,
                 AutoScroll = true
+
             };
             ThemeManager.ApplyThemeTo(selectform);
 
@@ -3348,21 +3338,18 @@ namespace MissionPlanner.GCSViews
 
             foreach (var field in test.GetProperties())
             {
-                TypeCode typeCode = Type.GetTypeCode(field.PropertyType);
-
-                if (!(typeCode == TypeCode.Single || typeCode == TypeCode.Double || typeCode == TypeCode.Int32 ||
-                      typeCode == TypeCode.UInt16))
-                    continue;
-                
                 // field.Name has the field's name.
                 object fieldValue = field.GetValue(thisBoxed, null); // Get value
                 if (fieldValue == null)
                     continue;
 
+                if (!fieldValue.IsNumber())
+                    continue;
+
                 max_length = Math.Max(max_length, TextRenderer.MeasureText(field.Name, selectform.Font).Width);
                 fields.Add(field.Name);
             }
-            max_length += 15;
+            max_length += 25;
             fields.Sort();
 
             int col_count = (int) (Screen.FromControl(this).Bounds.Width*0.8f)/max_length;
@@ -3379,8 +3366,9 @@ namespace MissionPlanner.GCSViews
                     Text = fields[i],
                     Name = fields[i],
                     Tag = qv,
-                    Location = new Point(5 + (i/row_count)*(max_length + 5), 2 + (i%row_count)*row_height),
-                    Size = new Size(max_length, row_height)
+                    Location = new Point(5 + (i/row_count)*(max_length + 5 ), 2 + (i%row_count)*row_height),
+                    Size = new Size(max_length, row_height),
+                    AutoSize = true
                 };
                 chk_box.CheckedChanged += chk_box_quickview_CheckedChanged;
                 if (chk_box.Checked)
@@ -4043,7 +4031,9 @@ namespace MissionPlanner.GCSViews
         {
             threadrun = false;
 
-            while (thisthread.IsAlive)
+            DateTime end = DateTime.Now.AddSeconds(5);
+
+            while (thisthread.IsAlive && DateTime.Now < end)
             {
                 Application.DoEvents();
             }
@@ -4267,7 +4257,15 @@ namespace MissionPlanner.GCSViews
         {
             if (!MainV2.comPort.BaseStream.IsOpen)
                 return;
-            MainV2.comPort.doAbortLand();
+
+            try
+            {
+                MainV2.comPort.doAbortLand();
+            }
+            catch
+            {
+                CustomMessageBox.Show(Strings.ERROR, Strings.CommandFailed);
+            }
         }
 
         GMapMarker center = new GMarkerGoogle(new PointLatLng(0.0, 0.0), GMarkerGoogleType.none);

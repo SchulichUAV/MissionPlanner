@@ -79,7 +79,7 @@ namespace MissionPlanner.Utilities
                 {
                     var ans = binlog.ReadMessageTypeOffset(basestream, length);
 
-                    if (ans.MsgType == 0)
+                    if (ans.MsgType == 0 && ans.Offset == 0)
                         continue;
 
                     byte type = ans.Item1;
@@ -147,6 +147,7 @@ namespace MissionPlanner.Utilities
                         var type = (byte)dflog.logformat[msgtype].Id;
 
                         messageindex[type].Add(linestartoffset[b]);
+                        messageindexline[type].Add((uint)b);
                     }
                     b++;
                 }
@@ -197,6 +198,15 @@ namespace MissionPlanner.Utilities
             }
 
             BuildUnitMultiList();
+
+            foreach (var item in GetEnumeratorType(new[]
+            {
+                "GPS", "GPS2"
+            }))
+            {
+                // get first gps time
+                break;
+            }
 
             indexcachelineno = -1;
         }
