@@ -4485,6 +4485,7 @@ namespace MissionPlanner.GCSViews
             {
                 CustomMessageBox.Show(String.Format(Strings.ErrorSetValueFailed, "AFS_TERMINATION"), Strings.ERROR);
             }
+        }
         private void setViewCountToolStripMenuItem_Click(object sender, EventArgs e)
         {
             string cols = "2", rows = "3";
