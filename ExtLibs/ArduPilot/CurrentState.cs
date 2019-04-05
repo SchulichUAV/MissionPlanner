@@ -112,6 +112,46 @@ namespace MissionPlanner
 
         private float _groundcourse = 0;
 
+        // Extra Pressure sensors
+        [DisplayText("Wing Left 1")]
+        public float wing_l1 { get; set; }
+
+        [DisplayText("Wing Left 2")]
+        public float wing_l2 { get; set; }
+
+        [DisplayText("Wing Left 3")]
+        public float wing_l3 { get; set; }
+
+        [DisplayText("Wing Left 4")]
+        public float wing_l4 { get; set; }
+
+        [DisplayText("Wing Right 1")]
+        public float wing_r1 { get; set; }
+
+        [DisplayText("Wing Right 2")]
+        public float wing_r2 { get; set; }
+
+        [DisplayText("Wing Right 3")]
+        public float wing_r3 { get; set; }
+
+        [DisplayText("Wing Right 4")]
+        public float wing_r4 { get; set; }
+
+        [DisplayText("3D Airspeed 1")]
+        public float three_d_aspd1 { get; set; }
+
+        [DisplayText("3D Airspeed 2")]
+        public float three_d_aspd2 { get; set; }
+
+        [DisplayText("3D Airspeed 3")]
+        public float three_d_aspd3 { get; set; }
+
+        [DisplayText("3D Airspeed 4")]
+        public float three_d_aspd4 { get; set; }
+
+        [DisplayText("3D Airspeed 5")]
+        public float three_d_aspd5 { get; set; }
+
         // position
         [DisplayText("Latitude (dd)")]
         public double lat { get; set; }
@@ -2268,6 +2308,31 @@ namespace MissionPlanner
                         //Console.WriteLine(MAV.sysid + " " +roll + " " + pitch + " " + yaw);
 
                         //MAVLink.packets[(byte)MAVLink.MSG_NAMES.ATTITUDE);
+                    }
+
+                    mavLinkMessage = MAV.getPacket((uint)MAVLink.MAVLINK_MSG_ID.WING_SENSOR_VALUES);
+                    if (mavLinkMessage != null)
+                    {
+                        var vals = mavLinkMessage.ToStructure<MAVLink.mavlink_wing_sensor_values_t>();
+                        wing_l1 = vals.sens_1_l;
+                        wing_l2 = vals.sens_2_l;
+                        wing_l3 = vals.sens_3_l;
+                        wing_l4 = vals.sens_4_l;
+                        wing_r1 = vals.sens_1_r;
+                        wing_r2 = vals.sens_2_r;
+                        wing_r3 = vals.sens_3_r;
+                        wing_r4 = vals.sens_4_r;
+                    }
+
+                    mavLinkMessage = MAV.getPacket((uint)MAVLink.MAVLINK_MSG_ID.THREE_D_AIRSPEED_VALUES);
+                    if (mavLinkMessage != null)
+                    {
+                        var vals = mavLinkMessage.ToStructure<MAVLink.mavlink_three_d_airspeed_values_t>();
+                        three_d_aspd1 = vals.airsp_1;
+                        three_d_aspd2 = vals.airsp_2;
+                        three_d_aspd3 = vals.airsp_3;
+                        three_d_aspd4 = vals.airsp_4;
+                        three_d_aspd5 = vals.airsp_5;
                     }
 
                     mavLinkMessage = MAV.getPacket((uint) MAVLink.MAVLINK_MSG_ID.GLOBAL_POSITION_INT);

@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 
 public partial class MAVLink
 {
-    public const string MAVLINK_BUILD_DATE = "Sun Nov 11 2018";
+    public const string MAVLINK_BUILD_DATE = "Mon Apr 01 2019";
     public const string MAVLINK_WIRE_PROTOCOL_VERSION = "2.0";
     public const int MAVLINK_MAX_PAYLOAD_LEN = 255;
 
@@ -255,6 +255,8 @@ public partial class MAVLink
 		new message_info(11030, "ESC_TELEMETRY_1_TO_4", 144, 44, 44, typeof( mavlink_esc_telemetry_1_to_4_t )),
 		new message_info(11031, "ESC_TELEMETRY_5_TO_8", 133, 44, 44, typeof( mavlink_esc_telemetry_5_to_8_t )),
 		new message_info(11032, "ESC_TELEMETRY_9_TO_12", 85, 44, 44, typeof( mavlink_esc_telemetry_9_to_12_t )),
+		new message_info(12000, "WING_SENSOR_VALUES", 126, 32, 32, typeof( mavlink_wing_sensor_values_t )),
+		new message_info(12001, "THREE_D_AIRSPEED_VALUES", 9, 20, 20, typeof( mavlink_three_d_airspeed_values_t )),
 		new message_info(42000, "ICAROUS_HEARTBEAT", 227, 1, 1, typeof( mavlink_icarous_heartbeat_t )),
 		new message_info(42001, "ICAROUS_KINEMATIC_BANDS", 239, 46, 46, typeof( mavlink_icarous_kinematic_bands_t )),
 
@@ -510,6 +512,8 @@ AOA_SSA = 11020,
 ESC_TELEMETRY_1_TO_4 = 11030,
 ESC_TELEMETRY_5_TO_8 = 11031,
 ESC_TELEMETRY_9_TO_12 = 11032,
+WING_SENSOR_VALUES = 12000,
+THREE_D_AIRSPEED_VALUES = 12001,
 ICAROUS_HEARTBEAT = 42000,
 ICAROUS_KINEMATIC_BANDS = 42001,
 
@@ -3938,6 +3942,7 @@ ICAROUS_KINEMATIC_BANDS = 42001,
         YAW_RATE_IGNORE=2048, 
     
     };
+    
     
     
     ///<summary> State flags for ADS-B transponder dynamic report </summary>
@@ -12218,6 +12223,74 @@ ICAROUS_KINEMATIC_BANDS = 42001,
         [Description("data")]
         [MarshalAs(UnmanagedType.ByValArray,SizeConst=58)]
 		public float[] data;
+    
+    };
+
+
+    [StructLayout(LayoutKind.Sequential,Pack=1,Size=32)]
+    ///<summary> Values from wing sensors </summary>
+    public struct mavlink_wing_sensor_values_t
+    {
+        /// <summary>sensor 1 left   </summary>
+        [Units("")]
+        [Description("sensor 1 left")]
+        public  float sens_1_l;
+            /// <summary>sensor 2 left   </summary>
+        [Units("")]
+        [Description("sensor 2 left")]
+        public  float sens_2_l;
+            /// <summary>sensor 3 left   </summary>
+        [Units("")]
+        [Description("sensor 3 left")]
+        public  float sens_3_l;
+            /// <summary>sensor 4 left   </summary>
+        [Units("")]
+        [Description("sensor 4 left")]
+        public  float sens_4_l;
+            /// <summary>sensor 1 right   </summary>
+        [Units("")]
+        [Description("sensor 1 right")]
+        public  float sens_1_r;
+            /// <summary>sensor 2 right   </summary>
+        [Units("")]
+        [Description("sensor 2 right")]
+        public  float sens_2_r;
+            /// <summary>sensor 3 right   </summary>
+        [Units("")]
+        [Description("sensor 3 right")]
+        public  float sens_3_r;
+            /// <summary>sensor 4 right   </summary>
+        [Units("")]
+        [Description("sensor 4 right")]
+        public  float sens_4_r;
+    
+    };
+
+
+    [StructLayout(LayoutKind.Sequential,Pack=1,Size=20)]
+    ///<summary> 3D airspeed values </summary>
+    public struct mavlink_three_d_airspeed_values_t
+    {
+        /// <summary>Airspeed 1   </summary>
+        [Units("")]
+        [Description("Airspeed 1")]
+        public  float airsp_1;
+            /// <summary>Airspeed 2   </summary>
+        [Units("")]
+        [Description("Airspeed 2")]
+        public  float airsp_2;
+            /// <summary>Airspeed 3   </summary>
+        [Units("")]
+        [Description("Airspeed 3")]
+        public  float airsp_3;
+            /// <summary>Airspeed 4   </summary>
+        [Units("")]
+        [Description("Airspeed 4")]
+        public  float airsp_4;
+            /// <summary>Airspeed 5   </summary>
+        [Units("")]
+        [Description("Airspeed 5")]
+        public  float airsp_5;
     
     };
 
