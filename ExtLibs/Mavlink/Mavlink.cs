@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 
 public partial class MAVLink
 {
-    public const string MAVLINK_BUILD_DATE = "Mon Apr 01 2019";
+    public const string MAVLINK_BUILD_DATE = "Fri Apr 05 2019";
     public const string MAVLINK_WIRE_PROTOCOL_VERSION = "2.0";
     public const int MAVLINK_MAX_PAYLOAD_LEN = 255;
 
@@ -3996,7 +3996,6 @@ ICAROUS_KINEMATIC_BANDS = 42001,
         REQUIRED=2, 
     
     };
-    
     
     
     
@@ -12303,7 +12302,6 @@ ICAROUS_KINEMATIC_BANDS = 42001,
     };
 
 
-
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=255)]
     ///<summary> Status text message (use only for important status and error messages). The full message payload can be used for status text, but we recommend that updates be kept concise. Note: The message is intended as a less restrictive replacement for STATUSTEXT. </summary>
     public struct mavlink_statustext_long_t
@@ -12317,6 +12315,30 @@ ICAROUS_KINEMATIC_BANDS = 42001,
         [Description("Status text message, without null termination character.")]
         [MarshalAs(UnmanagedType.ByValArray,SizeConst=254)]
 		public byte[] text;
+    
+    };
+
+
+    [StructLayout(LayoutKind.Sequential,Pack=1,Size=137)]
+    ///<summary> Cumulative distance traveled for each reported wheel. </summary>
+    public struct mavlink_wheel_distance_t
+    {
+        /// <summary>Timestamp (synced to UNIX time or since system boot).  [us] </summary>
+        [Units("[us]")]
+        [Description("Timestamp (synced to UNIX time or since system boot).")]
+        public  ulong time_usec;
+            /// <summary>Distance reported by individual wheel encoders. Forward rotations increase values, reverse rotations decrease them. Not all wheels will necessarily have wheel encoders; the mapping of encoders to wheel positions must be agreed/understood by the endpoints.  [m] </summary>
+        [Units("[m]")]
+        [Description("Distance reported by individual wheel encoders. Forward rotations increase values, reverse rotations decrease them. Not all wheels will necessarily have wheel encoders; the mapping of encoders to wheel positions must be agreed/understood by the endpoints.")]
+        [MarshalAs(UnmanagedType.ByValArray,SizeConst=16)]
+		public double distance;
+            /// <summary>Number of wheels reported.   </summary>
+        [Units("")]
+        [Description("Number of wheels reported.")]
+        public  byte count;
+    
+    };
+
 
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=32)]
     ///<summary> Values from wing sensors </summary>
@@ -12354,26 +12376,9 @@ ICAROUS_KINEMATIC_BANDS = 42001,
         [Units("")]
         [Description("sensor 4 right")]
         public  float sens_4_r;
+    
     };
 
-
-    [StructLayout(LayoutKind.Sequential,Pack=1,Size=137)]
-    ///<summary> Cumulative distance traveled for each reported wheel. </summary>
-    public struct mavlink_wheel_distance_t
-    {
-        /// <summary>Timestamp (synced to UNIX time or since system boot).  [us] </summary>
-        [Units("[us]")]
-        [Description("Timestamp (synced to UNIX time or since system boot).")]
-        public  ulong time_usec;
-            /// <summary>Distance reported by individual wheel encoders. Forward rotations increase values, reverse rotations decrease them. Not all wheels will necessarily have wheel encoders; the mapping of encoders to wheel positions must be agreed/understood by the endpoints.  [m] </summary>
-        [Units("[m]")]
-        [Description("Distance reported by individual wheel encoders. Forward rotations increase values, reverse rotations decrease them. Not all wheels will necessarily have wheel encoders; the mapping of encoders to wheel positions must be agreed/understood by the endpoints.")]
-        [MarshalAs(UnmanagedType.ByValArray,SizeConst=16)]
-		public double distance;
-            /// <summary>Number of wheels reported.   </summary>
-        [Units("")]
-        [Description("Number of wheels reported.")]
-        public  byte count;
 
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=20)]
     ///<summary> 3D airspeed values </summary>
