@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 
 public partial class MAVLink
 {
-    public const string MAVLINK_BUILD_DATE = "Tue Mar 19 2019";
+    public const string MAVLINK_BUILD_DATE = "Mon Apr 01 2019";
     public const string MAVLINK_WIRE_PROTOCOL_VERSION = "2.0";
     public const int MAVLINK_MAX_PAYLOAD_LEN = 255;
 
@@ -3996,6 +3996,7 @@ ICAROUS_KINEMATIC_BANDS = 42001,
         REQUIRED=2, 
     
     };
+    
     
     
     
@@ -12302,6 +12303,7 @@ ICAROUS_KINEMATIC_BANDS = 42001,
     };
 
 
+
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=255)]
     ///<summary> Status text message (use only for important status and error messages). The full message payload can be used for status text, but we recommend that updates be kept concise. Note: The message is intended as a less restrictive replacement for STATUSTEXT. </summary>
     public struct mavlink_statustext_long_t
@@ -12315,7 +12317,43 @@ ICAROUS_KINEMATIC_BANDS = 42001,
         [Description("Status text message, without null termination character.")]
         [MarshalAs(UnmanagedType.ByValArray,SizeConst=254)]
 		public byte[] text;
-    
+
+    [StructLayout(LayoutKind.Sequential,Pack=1,Size=32)]
+    ///<summary> Values from wing sensors </summary>
+    public struct mavlink_wing_sensor_values_t
+    {
+        /// <summary>sensor 1 left   </summary>
+        [Units("")]
+        [Description("sensor 1 left")]
+        public  float sens_1_l;
+            /// <summary>sensor 2 left   </summary>
+        [Units("")]
+        [Description("sensor 2 left")]
+        public  float sens_2_l;
+            /// <summary>sensor 3 left   </summary>
+        [Units("")]
+        [Description("sensor 3 left")]
+        public  float sens_3_l;
+            /// <summary>sensor 4 left   </summary>
+        [Units("")]
+        [Description("sensor 4 left")]
+        public  float sens_4_l;
+            /// <summary>sensor 1 right   </summary>
+        [Units("")]
+        [Description("sensor 1 right")]
+        public  float sens_1_r;
+            /// <summary>sensor 2 right   </summary>
+        [Units("")]
+        [Description("sensor 2 right")]
+        public  float sens_2_r;
+            /// <summary>sensor 3 right   </summary>
+        [Units("")]
+        [Description("sensor 3 right")]
+        public  float sens_3_r;
+            /// <summary>sensor 4 right   </summary>
+        [Units("")]
+        [Description("sensor 4 right")]
+        public  float sens_4_r;
     };
 
 
@@ -12336,6 +12374,31 @@ ICAROUS_KINEMATIC_BANDS = 42001,
         [Units("")]
         [Description("Number of wheels reported.")]
         public  byte count;
+
+    [StructLayout(LayoutKind.Sequential,Pack=1,Size=20)]
+    ///<summary> 3D airspeed values </summary>
+    public struct mavlink_three_d_airspeed_values_t
+    {
+        /// <summary>Airspeed 1   </summary>
+        [Units("")]
+        [Description("Airspeed 1")]
+        public  float airsp_1;
+            /// <summary>Airspeed 2   </summary>
+        [Units("")]
+        [Description("Airspeed 2")]
+        public  float airsp_2;
+            /// <summary>Airspeed 3   </summary>
+        [Units("")]
+        [Description("Airspeed 3")]
+        public  float airsp_3;
+            /// <summary>Airspeed 4   </summary>
+        [Units("")]
+        [Description("Airspeed 4")]
+        public  float airsp_4;
+            /// <summary>Airspeed 5   </summary>
+        [Units("")]
+        [Description("Airspeed 5")]
+        public  float airsp_5;
     
     };
 
