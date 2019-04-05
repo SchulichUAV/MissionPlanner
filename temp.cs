@@ -77,7 +77,8 @@ namespace MissionPlanner
 
             MainMap.MapProvider = GoogleSatelliteMapProvider.Instance;
 
-            MainMap.CacheLocation = Path.GetDirectoryName(Application.ExecutablePath) + "/gmapcache/";
+            MainMap.CacheLocation = Settings.GetDataDirectory() +
+                                    "gmapcache" + Path.DirectorySeparatorChar;
 
             var fbd = new FolderBrowserDialog();
 
@@ -917,7 +918,7 @@ namespace MissionPlanner
 
         private void but_td_Click(object sender, EventArgs e)
         {
-            new Swarm.TD.UI().Show();
+           
         }
 
         private void but_dem_Click(object sender, EventArgs e)

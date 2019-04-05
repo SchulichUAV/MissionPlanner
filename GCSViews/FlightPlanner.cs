@@ -620,6 +620,8 @@ namespace MissionPlanner.GCSViews
 
             MainMap.Overlays.Add(poioverlay);
 
+            prop = new Propagation(MainMap);
+
             top = new GMapOverlay("top");
             //MainMap.Overlays.Add(top);
 
@@ -1298,7 +1300,7 @@ namespace MissionPlanner.GCSViews
                 }
                 catch (Exception ex)
                 {
-                    CustomMessageBox.Show(Strings.ERROR, Strings.Invalid_home_location);
+                    CustomMessageBox.Show(Strings.Invalid_home_location, Strings.ERROR);
                     log.Error(ex);
                 }
             }
@@ -1317,7 +1319,7 @@ namespace MissionPlanner.GCSViews
                 }
                 catch (FormatException ex)
                 {
-                    CustomMessageBox.Show(Strings.ERROR, Strings.InvalidNumberEntered + "\n" +"WP Radius or Loiter Radius");
+                    CustomMessageBox.Show(Strings.InvalidNumberEntered + "\n" +"WP Radius or Loiter Radius", Strings.ERROR);
                 }
 
                 MainMap.HoldInvalidation = true;
@@ -1359,7 +1361,7 @@ namespace MissionPlanner.GCSViews
             }
             catch (FormatException ex)
             {
-                CustomMessageBox.Show(Strings.ERROR, Strings.InvalidNumberEntered + "\n" + ex.Message);
+                CustomMessageBox.Show(Strings.InvalidNumberEntered + "\n" + ex.Message, Strings.ERROR);
             }
         }
 
@@ -2878,6 +2880,8 @@ namespace MissionPlanner.GCSViews
         GMapOverlay geofenceoverlay;
         static GMapOverlay rallypointoverlay;
 
+        private static Propagation prop;
+
         // etc
         readonly Random rnd = new Random();
         string mobileGpsLog = string.Empty;
@@ -3891,7 +3895,7 @@ namespace MissionPlanner.GCSViews
             }
             catch (FormatException)
             {
-                CustomMessageBox.Show(Strings.ERROR, Strings.InvalidNumberEntered);
+                CustomMessageBox.Show(Strings.InvalidNumberEntered, Strings.ERROR);
             }
         }
 
@@ -4042,9 +4046,11 @@ namespace MissionPlanner.GCSViews
             }
             else
             {
-                List<PointLatLng> polygonPoints = new List<PointLatLng>();
-                polygonPoints.Add(startmeasure);
-                polygonPoints.Add(MouseDownStart);
+                List<PointLatLng> polygonPoints = new List<PointLatLng>
+                {
+                    startmeasure,
+                    MouseDownStart
+                };
 
                 GMapPolygon line = new GMapPolygon(polygonPoints, "measure dist");
                 line.Stroke.Color = Color.Green;
@@ -4343,6 +4349,12 @@ namespace MissionPlanner.GCSViews
             {
                 if (isMouseDown || CurentRectMarker != null)
                     return;
+
+                prop.alt = MainV2.comPort.MAV.cs.alt;
+                prop.altasl = MainV2.comPort.MAV.cs.altasl;
+                prop.center = MainMap.Position;
+                prop.Update(MainV2.comPort.MAV.cs.HomeLocation, MainV2.comPort.MAV.cs.Location,
+                            MainV2.comPort.MAV.cs.battery_kmleft);
 
                 routesoverlay.Markers.Clear();
 
@@ -5954,6 +5966,8 @@ namespace MissionPlanner.GCSViews
 
             polyicon.Location = new Point(10,100);
             polyicon.Paint(e.Graphics);
+
+            e.Graphics.ResetTransform();
         }
 
         MissionPlanner.Controls.Icon.Polygon polyicon = new MissionPlanner.Controls.Icon.Polygon();

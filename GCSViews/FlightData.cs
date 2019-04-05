@@ -692,6 +692,9 @@ namespace MissionPlanner.GCSViews
                 hud1.Russian = Settings.Instance.GetBoolean("russian_hud");
             }
 
+            groundColorToolStripMenuItem.Checked = Settings.Instance.GetBoolean("groundColorToolStripMenuItem");
+            groundColorToolStripMenuItem_Click(null, null);
+
             hud1.doResize();
 
             prop = new Propagation(gMapControl1);
@@ -1374,7 +1377,11 @@ namespace MissionPlanner.GCSViews
                                 {
                                     var adsbplane = new GMapMarkerADSBPlane(plla, plla.Heading)
                                     {
-                                        ToolTipText = "ICAO: " + plla.Tag + " " + plla.Alt.ToString("0"),
+                                        ToolTipText = "ICAO: " + plla.Tag + "\n" +
+                                        "Alt: " + plla.Alt.ToString("0") + "\n" +
+                                        "Speed: " + plla.Speed.ToString("0") + "\n" +
+                                        "Heading: " + plla.Heading.ToString("0")
+                                        ,
                                         ToolTipMode = MarkerTooltipMode.OnMouseOver,
                                         Tag = plla
                                     };
@@ -3542,14 +3549,25 @@ namespace MissionPlanner.GCSViews
             // arm the MAV
             try
             {
+                var action = MainV2.comPort.MAV.cs.armed ? "Disarm" : "Arm";
+
                 if (MainV2.comPort.MAV.cs.armed)
-                    if (CustomMessageBox.Show("Are you sure you want to Disarm?", "Disarm?", MessageBoxButtons.YesNo) !=
-                        (int)DialogResult.Yes)
+                    if (CustomMessageBox.Show("Are you sure you want to " + action, action, CustomMessageBox.MessageBoxButtons.YesNo) !=
+                        CustomMessageBox.DialogResult.Yes)
                         return;
 
                 bool ans = MainV2.comPort.doARM(!MainV2.comPort.MAV.cs.armed);
                 if (ans == false)
-                    CustomMessageBox.Show(Strings.ErrorRejectedByMAV, Strings.ERROR);
+                {
+                    if (CustomMessageBox.Show(action + " failed. Force " + action, Strings.ERROR, CustomMessageBox.MessageBoxButtons.YesNo) == CustomMessageBox.DialogResult.Yes)
+                    {
+                        ans = MainV2.comPort.doARM(!MainV2.comPort.MAV.cs.armed, true);
+                        if (ans == false)
+                        {
+                            CustomMessageBox.Show(Strings.ErrorRejectedByMAV, Strings.ERROR);
+                        }
+                    }
+                }
             }
             catch
             {
@@ -4152,7 +4170,7 @@ namespace MissionPlanner.GCSViews
 
                                 if (timeout > 30)
                                 {
-                                    CustomMessageBox.Show(Strings.ERROR, Strings.ErrorNoResponce);
+                                    CustomMessageBox.Show(Strings.ErrorNoResponce, Strings.ERROR);
                                     return;
                                 }
                             }
@@ -4167,7 +4185,7 @@ namespace MissionPlanner.GCSViews
 
                                 if (timeout > 30)
                                 {
-                                    CustomMessageBox.Show(Strings.ERROR, Strings.ErrorNoResponce);
+                                    CustomMessageBox.Show(Strings.ErrorNoResponce, Strings.ERROR);
                                     return;
                                 }
                             }
@@ -4182,7 +4200,7 @@ namespace MissionPlanner.GCSViews
 
                                 if (timeout > 40)
                                 {
-                                    CustomMessageBox.Show(Strings.ERROR, Strings.ErrorNoResponce);
+                                    CustomMessageBox.Show(Strings.ErrorNoResponce, Strings.ERROR);
                                     return;
                                 }
                             }
@@ -4198,7 +4216,7 @@ namespace MissionPlanner.GCSViews
 
                             if (timeout > 30)
                             {
-                                CustomMessageBox.Show(Strings.ERROR, Strings.ErrorNoResponce);
+                                CustomMessageBox.Show(Strings.ErrorNoResponce, Strings.ERROR);
                                 return;
                             }
                         }
@@ -4264,7 +4282,7 @@ namespace MissionPlanner.GCSViews
             }
             catch
             {
-                CustomMessageBox.Show(Strings.ERROR, Strings.CommandFailed);
+                CustomMessageBox.Show(Strings.CommandFailed, Strings.ERROR);
             }
         }
 
@@ -4668,6 +4686,23 @@ namespace MissionPlanner.GCSViews
             MainV2.comPort.setMountConfigure(MAVLink.MAV_MOUNT_MODE.MAVLINK_TARGETING, false, false, false);
             MainV2.comPort.setMountControl((float)trackBarPitch.Value * 100.0f, (float)trackBarRoll.Value * 100.0f, (float)trackBarYaw.Value * 100.0f, false);
         }
+
+        private void groundColorToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (groundColorToolStripMenuItem.Checked)
+            {
+                // brown
+                hud1.groundColor1 = Color.FromArgb(147, 78, 1);
+                hud1.groundColor2 = Color.FromArgb(60, 33, 4);
+            }
+            else
+            {
+                // green
+                hud1.groundColor1 = Color.FromArgb(0x9b, 0xb8, 0x24);
+                hud1.groundColor2 = Color.FromArgb(0x41, 0x4f, 0x07);
+            }
+
+            Settings.config["groundColorToolStripMenuItem"] = groundColorToolStripMenuItem.Checked.ToString();
+        }
     }
 }
- 

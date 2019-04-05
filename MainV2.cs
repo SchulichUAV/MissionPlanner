@@ -232,8 +232,7 @@ namespace MissionPlanner
             {
                 _displayConfiguration = value;
                 Settings.Instance["displayview"] = _displayConfiguration.ConvertToString();
-                if (LayoutChanged != null)
-                    LayoutChanged(null, EventArgs.Empty);
+                LayoutChanged?.Invoke(null, EventArgs.Empty);
             }
         }
 
@@ -1177,7 +1176,7 @@ namespace MissionPlanner
                     // create new plane
                     MainV2.instance.adsbPlanes[id] =
                         new adsb.PointLatLngAltHdg(adsb.Lat, adsb.Lng,
-                            adsb.Alt, adsb.Heading, id,
+                            adsb.Alt, adsb.Heading, adsb.Speed , id,
                             DateTime.Now) {CallSign = adsb.CallSign};
                 }
 
@@ -3476,6 +3475,8 @@ namespace MissionPlanner
             }
             if (keyData == (Keys.Control | Keys.L)) // limits
             {
+                new GCSViews.ConfigurationView.ConfigUAVCAN().ShowUserControl();
+
                 return true;
             }
             if (keyData == (Keys.Control | Keys.W)) // test ac config
@@ -3486,11 +3487,46 @@ namespace MissionPlanner
             }
             if (keyData == (Keys.Control | Keys.Z))
             {
-                MissionPlanner.GenOTP otp = new MissionPlanner.GenOTP();
+                //WHOAMI
+//#define MPUREG_WHOAMI                               0x75
+                //INV2REG_WHO_AM_I               INV2REG(REG_BANK0,0x00U)
 
-                otp.ShowDialog(this);
+                foreach (var item in Enum.GetNames(typeof(hal_ins_spi)))
+                {
+                    log.Info(item);
+                    MainV2.comPort.device_op((byte)MainV2.comPort.sysidcurrent, (byte)MainV2.comPort.compidcurrent, MAVLink.DEVICE_OP_BUSTYPE.SPI, item, 0, 0, 0x00, 1);
+                }
 
-                otp.Dispose();
+                foreach (var item in Enum.GetNames(typeof(hal_ins_i2c)))
+                {
+                    log.Info(item);
+                    var test = (byte)(int)Enum.Parse(typeof(hal_ins_i2c), item);                  
+                    MainV2.comPort.device_op((byte)MainV2.comPort.sysidcurrent, (byte)MainV2.comPort.compidcurrent, MAVLink.DEVICE_OP_BUSTYPE.I2C, "", 0, (byte)test, 0, 1);
+                    MainV2.comPort.device_op((byte)MainV2.comPort.sysidcurrent, (byte)MainV2.comPort.compidcurrent, MAVLink.DEVICE_OP_BUSTYPE.I2C, "", 1, (byte)test, 0, 1);
+                    MainV2.comPort.device_op((byte)MainV2.comPort.sysidcurrent, (byte)MainV2.comPort.compidcurrent, MAVLink.DEVICE_OP_BUSTYPE.I2C, "", 2, (byte)test, 0, 1);
+                    MainV2.comPort.device_op((byte)MainV2.comPort.sysidcurrent, (byte)MainV2.comPort.compidcurrent, MAVLink.DEVICE_OP_BUSTYPE.I2C, "", 3, (byte)test, 0, 1);
+                }
+
+                // enable led
+                MainV2.comPort.device_op((byte)MainV2.comPort.sysidcurrent, (byte)MainV2.comPort.compidcurrent, MAVLink.DEVICE_OP_BUSTYPE.I2C, "", 1, (byte)hal_ins_i2c.TOSHIBA_LED_I2C_ADDR, 4, 1, new byte[] { 3 });
+                // get register 1 
+                MainV2.comPort.device_op((byte)MainV2.comPort.sysidcurrent, (byte)MainV2.comPort.compidcurrent, MAVLink.DEVICE_OP_BUSTYPE.I2C, "", 1, (byte)hal_ins_i2c.TOSHIBA_LED_I2C_ADDR, 1, 4);
+                // write pwm0 reg 1
+                byte r = 0 ;
+                byte g =0;
+                byte b =0;
+                for (r = 0; r <= 16; r++)
+                {
+                    for (g = 0; g <= 16; g++)
+                    {
+                        for (b = 0; b <= 16; b++)
+                        {
+                            MainV2.comPort.device_op((byte)MainV2.comPort.sysidcurrent, (byte)MainV2.comPort.compidcurrent, MAVLink.DEVICE_OP_BUSTYPE.I2C, "", 1, (byte)hal_ins_i2c.TOSHIBA_LED_I2C_ADDR, 1, 3, new byte[] { b, g, r }); // b g r 
+                        }
+                    }
+                }
+                // get register 1 
+                MainV2.comPort.device_op((byte)MainV2.comPort.sysidcurrent, (byte)MainV2.comPort.compidcurrent, MAVLink.DEVICE_OP_BUSTYPE.I2C, "", 1, (byte)hal_ins_i2c.TOSHIBA_LED_I2C_ADDR, 1, 4);
 
                 return true;
             }
@@ -3677,7 +3713,7 @@ namespace MissionPlanner
         {
             if (!int.TryParse(_connectionControl.CMB_baudrate.Text, out comPortBaud))
             {
-                CustomMessageBox.Show(Strings.ERROR, Strings.InvalidBaudRate);
+                CustomMessageBox.Show(Strings.InvalidBaudRate, Strings.ERROR);
                 return;
             }
             var sb = new StringBuilder();
