@@ -24,5 +24,9 @@
       <field type="float" name="airsp_4">Airspeed 4</field>
       <field type="float" name="airsp_5">Airspeed 5</field>
     </message>
+    <message id="12003" name="DROP_POPUP">
+      <description>Does whatever</description>
+      <field type="float" name="value">Value 1</field>
+    </message>
   </messages>
 </mavlink>

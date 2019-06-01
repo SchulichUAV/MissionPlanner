@@ -259,6 +259,7 @@ public partial class MAVLink
 		new message_info(11032, "ESC_TELEMETRY_9_TO_12", 85, 44, 44, typeof( mavlink_esc_telemetry_9_to_12_t )),
 		new message_info(12000, "WING_SENSOR_VALUES", 126, 32, 32, typeof( mavlink_wing_sensor_values_t )),
 		new message_info(12001, "THREE_D_AIRSPEED_VALUES", 9, 20, 20, typeof( mavlink_three_d_airspeed_values_t )),
+		new message_info(12003, "DROP_POPUP", 189, 4, 4, typeof( mavlink_drop_popup_t )),
 		new message_info(42000, "ICAROUS_HEARTBEAT", 227, 1, 1, typeof( mavlink_icarous_heartbeat_t )),
 		new message_info(42001, "ICAROUS_KINEMATIC_BANDS", 239, 46, 46, typeof( mavlink_icarous_kinematic_bands_t )),
 
@@ -518,6 +519,7 @@ ESC_TELEMETRY_5_TO_8 = 11031,
 ESC_TELEMETRY_9_TO_12 = 11032,
 WING_SENSOR_VALUES = 12000,
 THREE_D_AIRSPEED_VALUES = 12001,
+DROP_POPUP = 12003,
 ICAROUS_HEARTBEAT = 42000,
 ICAROUS_KINEMATIC_BANDS = 42001,
 
@@ -12404,6 +12406,18 @@ ICAROUS_KINEMATIC_BANDS = 42001,
         [Units("")]
         [Description("Airspeed 5")]
         public  float airsp_5;
+    
+    };
+
+
+    [StructLayout(LayoutKind.Sequential,Pack=1,Size=4)]
+    ///<summary> Does whatever </summary>
+    public struct mavlink_drop_popup_t
+    {
+        /// <summary>Value 1   </summary>
+        [Units("")]
+        [Description("Value 1")]
+        public  float value;
     
     };
 

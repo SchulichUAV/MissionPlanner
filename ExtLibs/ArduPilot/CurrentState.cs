@@ -152,6 +152,10 @@ namespace MissionPlanner
         [DisplayText("3D Airspeed 5")]
         public float three_d_aspd5 { get; set; }
 
+        //drop test message
+        [DisplayText("DROP POPUP")]
+        public float dropvalue { get; set; }
+
         // position
         [DisplayText("Latitude (dd)")]
         public double lat { get; set; }
@@ -2361,6 +2365,17 @@ namespace MissionPlanner
                         three_d_aspd3 = vals.airsp_3;
                         three_d_aspd4 = vals.airsp_4;
                         three_d_aspd5 = vals.airsp_5;
+                    }
+
+                    mavLinkMessage = MAV.getPacket((uint)MAVLink.MAVLINK_MSG_ID.DROP_POPUP);
+                    if (mavLinkMessage != null)
+                    {
+                        var vals = mavLinkMessage.ToStructure<MAVLink.mavlink_drop_popup_t>();
+                        dropvalue = vals.value;
+                        if (dropvalue >= 1000)
+                        {
+                            CustomMessageBox.Show("value big: " + dropvalue);
+                        }
                     }
 
                     mavLinkMessage = MAV.getPacket((uint) MAVLink.MAVLINK_MSG_ID.GLOBAL_POSITION_INT);

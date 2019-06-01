@@ -284,6 +284,51 @@
               resource lookups using this strongly typed resource class.
             </summary>
         </member>
+        <member name="P:BSE.Windows.Forms.Properties.Resources.ChevronDown">
+            <summary>
+              Looks up a localized resource of type System.Drawing.Bitmap.
+            </summary>
+        </member>
+        <member name="P:BSE.Windows.Forms.Properties.Resources.ChevronLeft">
+            <summary>
+              Looks up a localized resource of type System.Drawing.Bitmap.
+            </summary>
+        </member>
+        <member name="P:BSE.Windows.Forms.Properties.Resources.ChevronRight">
+            <summary>
+              Looks up a localized resource of type System.Drawing.Bitmap.
+            </summary>
+        </member>
+        <member name="P:BSE.Windows.Forms.Properties.Resources.ChevronUp">
+            <summary>
+              Looks up a localized resource of type System.Drawing.Bitmap.
+            </summary>
+        </member>
+        <member name="P:BSE.Windows.Forms.Properties.Resources.closePanel">
+            <summary>
+              Looks up a localized resource of type System.Drawing.Bitmap.
+            </summary>
+        </member>
+        <member name="P:BSE.Windows.Forms.Properties.Resources.Collapse">
+            <summary>
+              Looks up a localized resource of type System.Drawing.Bitmap.
+            </summary>
+        </member>
+        <member name="P:BSE.Windows.Forms.Properties.Resources.Collapse_h">
+            <summary>
+              Looks up a localized resource of type System.Drawing.Bitmap.
+            </summary>
+        </member>
+        <member name="P:BSE.Windows.Forms.Properties.Resources.Expand">
+            <summary>
+              Looks up a localized resource of type System.Drawing.Bitmap.
+            </summary>
+        </member>
+        <member name="P:BSE.Windows.Forms.Properties.Resources.Expand_h">
+            <summary>
+              Looks up a localized resource of type System.Drawing.Bitmap.
+            </summary>
+        </member>
         <member name="P:BSE.Windows.Forms.Properties.Resources.IDS_ArgumentException">
             <summary>
               Looks up a localized string similar to Parameter {0} can&apos;t be null.
